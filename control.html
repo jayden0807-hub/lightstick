@@ -60,37 +60,33 @@
       <label>泡泡（Bubble） — color / count / spread</label>
       <div class="row">
         <input id="bubbleColor" type="color" value="#9ae0ff">
-        <input id="bubbleCount" type="number" min="1" max="200" value="40" style="width:90px">
+        <input id="bubbleCount" type="number" min="1" max="400" value="60" style="width:90px">
       </div>
       <div class="row">
         <label style="width:60px">spread</label>
-        <input id="bubbleSpread" type="number" min="0" max="800" value="200" style="width:90px">
+        <input id="bubbleSpread" type="number" min="0" max="1000" value="400" style="width:90px">
         <button id="bubbleBtn" class="btn-primary">Spawn Bubbles (Full Page)</button>
         <button id="clearBubbleBtn" class="btn-ghost">Clear Bubbles</button>
       </div>
 
-      <label style="margin-top:10px">爱心（Heart） — single / blast</label>
+      <label style="margin-top:10px">爱心（Heart） — single / blast (behaves like bubble)</label>
       <div class="row">
         <input id="heartColor" type="color" value="#ff77aa">
-        <input id="heartSize" type="number" min="40" max="300" value="120" style="width:90px">
+        <input id="heartCount" type="number" min="1" max="400" value="24" style="width:90px">
       </div>
       <div class="row">
-        <label style="width:60px">duration</label>
-        <input id="heartDur" type="number" min="200" max="5000" value="1500" style="width:90px">
-        <button id="heartBtn" class="btn-primary">Send Heart</button>
+        <button id="heartBtn" class="btn-primary">Send 1 Heart</button>
         <button id="heartBlastBtn" class="btn-primary">Heart Blast</button>
         <button id="clearHeartBtn" class="btn-ghost">Clear Hearts</button>
       </div>
 
-      <label style="margin-top:10px">星星（Star） — single / blast</label>
+      <label style="margin-top:10px">星星（Star） — single / blast (behaves like bubble)</label>
       <div class="row">
         <input id="starColor" type="color" value="#fff1a8">
-        <input id="starSize" type="number" min="40" max="300" value="100" style="width:90px">
+        <input id="starCount" type="number" min="1" max="400" value="20" style="width:90px">
       </div>
       <div class="row">
-        <label style="width:60px">duration</label>
-        <input id="starDur" type="number" min="200" max="5000" value="1500" style="width:90px">
-        <button id="starBtn" class="btn-primary">Send Star</button>
+        <button id="starBtn" class="btn-primary">Send 1 Star</button>
         <button id="starBlastBtn" class="btn-primary">Star Blast</button>
         <button id="clearStarBtn" class="btn-ghost">Clear Stars</button>
       </div>
@@ -154,42 +150,40 @@
     };
     document.getElementById('clearBlink2Btn').onclick = ()=> send({ type:'clear_effect', effect:'blink2' });
 
-    // bubbles
+    // bubble
     document.getElementById('bubbleBtn').onclick = ()=> {
       const c = document.getElementById('bubbleColor').value;
-      const count = Math.max(1, Math.min(200, parseInt(document.getElementById('bubbleCount').value||40)));
-      const spread = Math.max(0, Math.min(800, parseInt(document.getElementById('bubbleSpread').value||200)));
+      const count = Math.max(1, Math.min(400, parseInt(document.getElementById('bubbleCount').value||60)));
+      const spread = Math.max(0, Math.min(1000, parseInt(document.getElementById('bubbleSpread').value||400)));
       send({ type:'bubble', color: c, count: count, spread: spread });
     };
     document.getElementById('clearBubbleBtn').onclick = ()=> send({ type:'clear_effect', effect:'bubble' });
 
-    // heart single / blast
+    // heart single / blast (behave like bubble)
     document.getElementById('heartBtn').onclick = ()=> {
       const c = document.getElementById('heartColor').value;
-      const size = Math.max(40, Math.min(300, parseInt(document.getElementById('heartSize').value||120)));
-      const dur = Math.max(200, Math.min(5000, parseInt(document.getElementById('heartDur').value||1500)));
-      send({ type:'heart', color: c, size: size, duration: dur });
+      send({ type:'heart', color: c, size: 72 });
     };
     document.getElementById('heartBlastBtn').onclick = ()=> {
       const c = document.getElementById('heartColor').value;
-      send({ type:'heart_blast', color: c, count: 30 });
+      const count = Math.max(1, Math.min(400, parseInt(document.getElementById('heartCount').value||30)));
+      send({ type:'heart_blast', color: c, count: count });
     };
     document.getElementById('clearHeartBtn').onclick = ()=> send({ type:'clear_effect', effect:'heart' });
 
     // star single / blast
     document.getElementById('starBtn').onclick = ()=> {
       const c = document.getElementById('starColor').value;
-      const size = Math.max(40, Math.min(300, parseInt(document.getElementById('starSize').value||100)));
-      const dur = Math.max(200, Math.min(5000, parseInt(document.getElementById('starDur').value||1500)));
-      send({ type:'star', color: c, size: size, duration: dur });
+      send({ type:'star', color: c, size: 72 });
     };
     document.getElementById('starBlastBtn').onclick = ()=> {
       const c = document.getElementById('starColor').value;
-      send({ type:'star_blast', color: c, count: 18 });
+      const count = Math.max(1, Math.min(400, parseInt(document.getElementById('starCount').value||20)));
+      send({ type:'star_blast', color: c, count: count });
     };
     document.getElementById('clearStarBtn').onclick = ()=> send({ type:'clear_effect', effect:'star' });
 
-    // marquee
+    // marquee (right->left exact text)
     document.getElementById('marqBtn').onclick = ()=> {
       const txt = (document.getElementById('marqText').value||'').trim();
       if (!txt) return alert('请输入跑马灯文字');

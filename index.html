@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightstick — Audience (Final)</title>
+  <title>Multech Lightstick — Audience (Hearts/Stars as Bubbles)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{--bg:#000}
@@ -10,19 +10,23 @@
     #stage{position:relative;width:100%;height:100%;touch-action:none}
     #bg{position:absolute;inset:0;z-index:0;background:#000;transition:background 300ms linear}
     .effect-el{position:absolute;pointer-events:none;will-change:transform,opacity;mix-blend-mode:screen}
-    /* heart */
-    .heart{z-index:20;transform-origin:center center;filter:drop-shadow(0 0 18px rgba(255,100,160,0.45))}
-    /* star */
-    .star{z-index:20;transform-origin:center center;filter:drop-shadow(0 0 12px rgba(255,220,120,0.35))}
-    /* bubble */
-    .bubble{border-radius:50%;z-index:12;mix-blend-mode:screen}
-    .bubble::after{
-      content:"";
-      position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.0) 50%);
-      pointer-events:none;opacity:0.55;
-      mix-blend-mode:overlay;
+    /* bubble / heart / star visual base */
+    .bubble, .heart-el, .star-el {
+      border-radius:50%;
+      z-index:12;
+      mix-blend-mode:screen;
+      pointer-events:none;
+      overflow:visible;
+      position:absolute;
     }
+    /* bubble highlight */
+    .bubble::after, .heart-el::after, .star-el::after {
+      content:""; position:absolute; left:0; top:0; right:0; bottom:0; border-radius:50%;
+      background: radial-gradient(circle at 28% 28%, rgba(255,255,255,0.9), rgba(255,255,255,0.12) 20%, rgba(255,255,255,0) 55%);
+      pointer-events:none; mix-blend-mode:overlay; opacity:0.45;
+    }
+    /* heart inner SVG (we will insert inline) */
+    .heart-svg, .star-svg{ width:100%; height:100%; display:block; pointer-events:none; }
     /* marquee */
     .marquee-wrap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:auto;z-index:30;pointer-events:none;display:flex;justify-content:center;align-items:center;overflow:hidden}
     .marquee{white-space:nowrap;font-weight:800;display:inline-block}
@@ -49,15 +53,12 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    console.log("Audience connected to DB:", firebaseConfig.databaseURL);
+    console.log("Audience DB:", firebaseConfig.databaseURL);
 
     const stage = document.getElementById('stage');
     const bg = document.getElementById('bg');
 
-    // timers/state for persistent effects
-    let blinkTimer = null;
-    let blink2Timer = null;
-    let marqueeTimer = null;
+    let blinkTimer = null, blink2Timer = null, marqueeTimer = null;
 
     const actionRef = ref(db, 'light/action');
     onValue(actionRef, snap => {
@@ -68,35 +69,31 @@
     });
 
     function handleAction(a){
-      const t = a.type;
-      switch(t){
+      switch(a.type){
         case 'steady': bg.style.background = a.color || '#ff77aa'; break;
-        case 'blink': startBlink(a.color || '#ff77aa', Math.max(60, a.speed||400)); break;
-        case 'blink2': startBlink2(a.colorA||'#ff77aa', a.colorB||'#0077ff', Math.max(60, a.speed||400)); break;
-        case 'bubble': spawnManyBubbles(Math.max(1,a.count||12), a.color||'#9ae0ff', a.spread||0); break;
-        case 'heart': spawnHeartOnce(a); break;
-        case 'heart_blast': spawnHeartBlast(Math.max(5, a.count||24), a.color||'#ff77aa'); break;
-        case 'star': spawnStarOnce(a); break;
-        case 'star_blast': spawnStarBlast(Math.max(4, a.count||18), a.color||'#fff1a8'); break;
-        case 'marquee': spawnMarquee(a.text||'', a.color||'#fff', Math.max(1000,a.speed||12000), Math.max(12,a.fontSize||28)); break;
-        case 'clear_effect':
-          clearEffect(a.effect); break;
+        case 'blink': startBlink(a.color||'#ff77aa', Math.max(60,a.speed||400)); break;
+        case 'blink2': startBlink2(a.colorA||'#ff77aa', a.colorB||'#0077ff', Math.max(60,a.speed||400)); break;
+        case 'bubble': spawnManyBubbles(Math.max(1,a.count||20), a.color||'#9ae0ff', a.spread||0); break;
+        case 'heart': spawnManyHearts(1, a.color||'#ff77aa', a.size||60, a.duration||1500); break;
+        case 'heart_blast': spawnManyHearts(Math.max(5,a.count||25), a.color||'#ff77aa'); break;
+        case 'star': spawnManyStars(1, a.color||'#fff1a8', a.size||60, a.duration||1500); break;
+        case 'star_blast': spawnManyStars(Math.max(4,a.count||18), a.color||'#fff1a8'); break;
+        case 'marquee': spawnMarquee(a.text||'', a.color||'#fff', Math.max(500,a.speed||12000), Math.max(12,a.fontSize||28)); break;
+        case 'clear_effect': clearEffect(a.effect); break;
         case 'clear': clearAll(); break;
-        default: console.warn('unknown action', t);
+        default: console.warn('unknown action', a.type);
       }
     }
 
-    /* ---------- Clear helpers ---------- */
+    /* clear helpers */
     function clearEffect(effect){
-      console.log('clear effect', effect);
-      if (effect === 'blink') { if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; } }
-      if (effect === 'blink2') { if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; } }
-      if (effect === 'bubble') { document.querySelectorAll('.bubble').forEach(e=>e.remove()); }
-      if (effect === 'heart') { document.querySelectorAll('.heart').forEach(e=>e.remove()); }
-      if (effect === 'star') { document.querySelectorAll('.star').forEach(e=>e.remove()); }
-      if (effect === 'marquee') { document.querySelectorAll('.marquee-wrap').forEach(e=>e.remove()); if (marqueeTimer){ clearTimeout(marqueeTimer); marqueeTimer=null; } }
+      if (effect === 'blink'){ if (blinkTimer){ clearInterval(blinkTimer); blinkTimer=null; } }
+      if (effect === 'blink2'){ if (blink2Timer){ clearInterval(blink2Timer); blink2Timer=null; } }
+      if (effect === 'bubble'){ document.querySelectorAll('.bubble').forEach(e=>e.remove()); }
+      if (effect === 'heart'){ document.querySelectorAll('.heart-el').forEach(e=>e.remove()); }
+      if (effect === 'star'){ document.querySelectorAll('.star-el').forEach(e=>e.remove()); }
+      if (effect === 'marquee'){ document.querySelectorAll('.marquee-wrap').forEach(e=>e.remove()); if (marqueeTimer){ clearTimeout(marqueeTimer); marqueeTimer=null; } }
     }
-
     function clearAll(){
       if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; }
       if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; }
@@ -104,160 +101,143 @@
       bg.style.background = '#000';
     }
 
-    /* ---------- Blink ---------- */
-    function startBlink(color, speed){
+    /* blink */
+    function startBlink(color,speed){
       if (blinkTimer) clearInterval(blinkTimer);
       if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; }
       let on=false;
-      blinkTimer = setInterval(()=> { bg.style.background = on ? color : '#000'; on = !on; }, speed);
+      blinkTimer = setInterval(()=>{ bg.style.background = on? color:'#000'; on=!on; }, speed);
     }
     function startBlink2(A,B,speed){
-      if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; }
+      if (blinkTimer){ clearInterval(blinkTimer); blinkTimer=null; }
       if (blink2Timer) clearInterval(blink2Timer);
       let state=0;
-      blink2Timer = setInterval(()=> { bg.style.background = (state%2===0)?A:B; state++; }, speed);
+      blink2Timer = setInterval(()=>{ bg.style.background = (state%2===0)?A:B; state++; }, speed);
     }
 
-    /* ---------- Bubbles (full-screen) ---------- */
-    function spawnManyBubbles(n, color, spread){
-      for (let i=0;i<n;i++){
-        setTimeout(()=> spawnBubble({color, spread}), i*60);
-      }
+    /* bubble (kept) */
+    function spawnManyBubbles(n,color,spread){
+      for (let i=0;i<n;i++) setTimeout(()=> spawnBubble({color,spread}), i*60);
     }
-    function spawnBubble({ color='#9ae0ff', spread=0 }){
-      const vw = innerWidth, vh = innerHeight;
+    function spawnBubble({color='#9ae0ff',spread=0}){
+      const vw=innerWidth, vh=innerHeight;
       const el = document.createElement('div');
       el.className = 'bubble effect-el';
-      const size = 30 + Math.random()*80; // larger
+      const size = 30 + Math.random()*80;
       el.style.width = el.style.height = size + 'px';
-      // full screen start y: can start below bottom or anywhere; we let some start below, some inside, some above
-      const startY = (Math.random()*1.6 - 0.3) * vh; // -0.3*vh .. 1.3*vh
+      const startY = (Math.random()*1.6 - 0.3) * vh;
       el.style.left = (Math.random()*vw - size/2) + 'px';
       el.style.top = startY + 'px';
-      // translucent look
       el.style.background = color;
       el.style.opacity = (0.25 + Math.random()*0.6).toString();
       stage.appendChild(el);
-      // target move: upward large distance
       const endY = - (50 + Math.random()*300);
-      const tx = (spread>0) ? (Math.random()*spread - spread/2) : (Math.random()*240 - 120);
-      const dur = 9000 + Math.random()*14000; // long life
+      const tx = (spread>0)? (Math.random()*spread - spread/2) : (Math.random()*240 - 120);
+      const dur = 9000 + Math.random()*14000;
       el.style.transition = `transform ${dur/1000}s linear, opacity ${dur/1000}s linear`;
-      requestAnimationFrame(()=> {
-        el.style.transform = `translate(${tx}px, ${endY - startY}px) scale(${0.6 + Math.random()*0.9})`;
-        el.style.opacity = '0.05';
-      });
-      setTimeout(()=> { if (el.parentNode) el.remove(); }, dur + 200);
+      requestAnimationFrame(()=> { el.style.transform = `translate(${tx}px, ${endY - startY}px) scale(${0.6 + Math.random()*0.9})`; el.style.opacity='0.05'; });
+      setTimeout(()=> { if (el.parentNode) el.remove(); }, dur+200);
     }
 
-    /* ---------- Heart ---------- */
-    function spawnHeartOnce(a){
-      const color = a.color || '#ff77aa';
-      const size = Math.max(40, a.size||120);
-      const dur = Math.max(200, a.duration||1500);
-      spawnHeart({color, size, dur});
+    /* HEART as bubble-like (single & blast) */
+    function spawnManyHearts(n, color, sizeOverride, durationOverride){
+      for (let i=0;i<n;i++){
+        setTimeout(()=> spawnHeart({ color, size: sizeOverride || (20 + Math.random()*120), dur: durationOverride || (1200 + Math.random()*1800) }), i*60);
+      }
     }
-    function spawnHeart({ color='#ff77aa', size=120, dur=1500 }){
-      const vw = innerWidth, vh = innerHeight;
-      const x = (Math.random()*0.8 + 0.1)*vw;
-      const y = (Math.random()*0.7 + 0.15)*vh;
-      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    function spawnHeart({ color='#ff77aa', size=80, dur=1400 }){
+      const vw=innerWidth, vh=innerHeight;
+      const el = document.createElement('div');
+      el.className = 'heart-el effect-el';
+      el.style.width = el.style.height = size + 'px';
+      const startY = (Math.random()*1.6 - 0.3) * vh;
+      el.style.left = (Math.random()*vw - size/2) + 'px';
+      el.style.top = startY + 'px';
+      // use background color then put svg on top via inline background-image? we'll insert svg inside for crispness
+      el.style.background = color;
+      el.style.opacity = (0.3 + Math.random()*0.7).toString();
+      // add inline svg heart centered inside
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns,'svg');
       svg.setAttribute('viewBox','0 0 32 29');
-      svg.className = 'heart effect-el';
-      svg.style.left = (x - size/2) + 'px';
-      svg.style.top = (y - size/2) + 'px';
-      svg.style.width = size + 'px';
-      svg.style.height = size + 'px';
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      svg.className = 'heart-svg';
+      const path = document.createElementNS(ns,'path');
       path.setAttribute('d','M23.6,0C20.6,0,18,1.9,16,4.4C14,1.9,11.4,0,8.4,0C3.7,0,0,3.6,0,8.3c0,9.2,16,20.7,16,20.7S32,17.6,32,8.3 C32,3.6,28.3,0,23.6,0z');
-      path.setAttribute('fill', color);
+      path.setAttribute('fill','#ffffff');
+      path.setAttribute('fill-opacity','0.9');
       svg.appendChild(path);
-      svg.style.transform = 'scale(0.2)';
-      svg.style.opacity = '0';
-      stage.appendChild(svg);
-      requestAnimationFrame(()=> {
-        svg.style.transition = `transform ${dur/1000}s cubic-bezier(.2,.9,.3,1), opacity ${dur/1000}s linear`;
-        svg.style.transform = 'scale(1.6)';
-        svg.style.opacity = '0.95';
-      });
-      setTimeout(()=> { svg.style.opacity='0'; setTimeout(()=> svg.remove(), 420); }, dur);
-    }
-    function spawnHeartBlast(count, color){
-      for (let i=0;i<count;i++){
-        setTimeout(()=> spawnHeart({ color, size: 60 + Math.random()*160, dur: 900 + Math.random()*1600 }), i*80);
-      }
+      svg.style.position='absolute';
+      svg.style.left='0'; svg.style.top='0';
+      el.appendChild(svg);
+      stage.appendChild(el);
+      const endY = - (50 + Math.random()*300);
+      const tx = (Math.random()*240 - 120);
+      const dur = dur || (9000 + Math.random()*8000);
+      el.style.transition = `transform ${dur/1000}s linear, opacity ${dur/1000}s linear`;
+      requestAnimationFrame(()=> { el.style.transform = `translate(${tx}px, ${endY - startY}px) scale(${0.6 + Math.random()*0.9})`; el.style.opacity='0.05'; });
+      setTimeout(()=> { if (el.parentNode) el.remove(); }, dur+200);
     }
 
-    /* ---------- Star ---------- */
-    function spawnStarOnce(a){
-      const color = a.color || '#fff1a8';
-      const size = Math.max(40, a.size||100);
-      const dur = Math.max(200, a.duration||1500);
-      spawnStar({color,size,dur});
+    /* STAR as bubble-like */
+    function spawnManyStars(n, color, sizeOverride, durationOverride){
+      for (let i=0;i<n;i++){
+        setTimeout(()=> spawnStar({ color, size: sizeOverride || (24 + Math.random()*96), dur: durationOverride || (1200 + Math.random()*1800) }), i*70);
+      }
     }
-    function spawnStar({ color='#fff1a8', size=100, dur=1500 }){
-      const vw = innerWidth, vh = innerHeight;
-      const x = (Math.random()*0.8 + 0.1)*vw;
-      const y = (Math.random()*0.7 + 0.15)*vh;
-      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    function spawnStar({ color='#fff1a8', size=80, dur=1400 }){
+      const vw=innerWidth, vh=innerHeight;
+      const el = document.createElement('div');
+      el.className = 'star-el effect-el';
+      el.style.width = el.style.height = size + 'px';
+      const startY = (Math.random()*1.6 - 0.3) * vh;
+      el.style.left = (Math.random()*vw - size/2) + 'px';
+      el.style.top = startY + 'px';
+      el.style.background = color;
+      el.style.opacity = (0.3 + Math.random()*0.7).toString();
+      // star svg in center
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns,'svg');
       svg.setAttribute('viewBox','0 0 64 64');
-      svg.className = 'star effect-el';
-      svg.style.left = (x - size/2) + 'px';
-      svg.style.top = (y - size/2) + 'px';
-      svg.style.width = size + 'px';
-      svg.style.height = size + 'px';
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      svg.className = 'star-svg';
+      const path = document.createElementNS(ns,'path');
       path.setAttribute('d','M32 4 L39 24 L60 24 L42 36 L49 56 L32 44 L15 56 L22 36 L4 24 L25 24 Z');
-      path.setAttribute('fill', color);
+      path.setAttribute('fill','#ffffff');
+      path.setAttribute('fill-opacity','0.95');
       svg.appendChild(path);
-      svg.style.transform = 'scale(0.2) rotate(0deg)';
-      svg.style.opacity = '0';
-      stage.appendChild(svg);
-      requestAnimationFrame(()=> {
-        svg.style.transition = `transform ${dur/1000}s cubic-bezier(.2,.9,.3,1), opacity ${dur/1000}s linear`;
-        svg.style.transform = `scale(1.2) rotate(${10 - Math.random()*20}deg)`;
-        svg.style.opacity = '0.95';
-      });
-      setTimeout(()=> { svg.style.opacity='0'; setTimeout(()=> svg.remove(), 420); }, dur);
-    }
-    function spawnStarBlast(count, color){
-      for (let i=0;i<count;i++){
-        setTimeout(()=> spawnStar({ color, size: 50 + Math.random()*120, dur: 900 + Math.random()*1600 }), i*90);
-      }
+      svg.style.position='absolute'; svg.style.left='0'; svg.style.top='0';
+      el.appendChild(svg);
+      stage.appendChild(el);
+      const endY = - (50 + Math.random()*300);
+      const tx = (Math.random()*240 - 120);
+      const dur = dur || (9000 + Math.random()*8000);
+      el.style.transition = `transform ${dur/1000}s linear, opacity ${dur/1000}s linear`;
+      requestAnimationFrame(()=> { el.style.transform = `translate(${tx}px, ${endY - startY}px) scale(${0.6 + Math.random()*0.9})`; el.style.opacity='0.05'; });
+      setTimeout(()=> { if (el.parentNode) el.remove(); }, dur+200);
     }
 
-    /* ---------- Marquee (right -> left, exact text, centered vertically) ---------- */
+    /* MARQUEE: right -> left, exact text, centered vertically */
     function spawnMarquee(text, color, speed, fontSize){
       if (!text) return;
-      // remove previous marquee if exists (we keep multiple allowed? user wanted single behavior)
       document.querySelectorAll('.marquee-wrap').forEach(e=>e.remove());
       if (marqueeTimer){ clearTimeout(marqueeTimer); marqueeTimer=null; }
-
-      const wrap = document.createElement('div');
-      wrap.className = 'marquee-wrap';
-      const span = document.createElement('div');
-      span.className = 'marquee';
-      span.style.color = color;
-      span.style.fontSize = fontSize + 'px';
-      span.textContent = text; // exact text only
+      const wrap = document.createElement('div'); wrap.className='marquee-wrap';
+      const span = document.createElement('div'); span.className='marquee';
+      span.style.color = color; span.style.fontSize = fontSize + 'px';
+      span.textContent = text; // exact text
       wrap.appendChild(span);
       stage.appendChild(wrap);
-
       requestAnimationFrame(()=> {
         const startX = window.innerWidth;
-        const endX = -span.offsetWidth;
+        const endX = - span.offsetWidth;
         span.style.transform = `translateX(${startX}px)`;
         span.style.transition = `transform ${speed/1000}s linear`;
         requestAnimationFrame(()=> { span.style.transform = `translateX(${endX}px)`; });
       });
-
       marqueeTimer = setTimeout(()=> { wrap.remove(); marqueeTimer=null; }, speed + 200);
     }
 
-    // expose debug helpers for quick manual testing
-    window._multech = {
-      spawnBubble, spawnManyBubbles, spawnHeart, spawnHeartBlast, spawnStar, spawnStarBlast, spawnMarquee, clearAll, clearEffect
-    };
+    // expose debug
+    window._multech = { spawnManyBubbles, spawnManyHearts, spawnManyStars, spawnMarquee, clearAll, clearEffect };
   </script>
 </body>
 </html>
