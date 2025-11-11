@@ -2,51 +2,121 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightshow Controller (Extended)</title>
+  <title>Multech Lightshow Controller — Full Panel</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:sans-serif;padding:18px;background:#071024;color:#fff}
-    label{display:block;margin-top:10px}
-    .row{display:flex;gap:8px;align-items:center}
-    input[type="text"]{padding:6px;border-radius:6px;border:1px solid #333;background:#06202b;color:#fff}
-    button{padding:8px 12px;margin-top:12px;cursor:pointer;border:0;border-radius:6px}
-    .btn-primary{background:#ff5fa8;color:#111}
-    .btn-ghost{background:transparent;border:1px solid #30424a;color:#cfe}
+    :root { --bg:#071024; --panel:#0b2230; --accent:#ff5fa8; --muted:#6ea0b0; color-scheme: dark; }
+    body{margin:0;padding:18px;font-family:Inter,system-ui,Arial;background:var(--bg);color:#fff}
+    h2{margin:0 0 12px 0}
+    .panel{background:var(--panel);padding:12px;border-radius:10px;max-width:920px;margin-bottom:12px}
+    label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+    .row{display:flex;gap:10px;align-items:center;margin-top:6px}
+    input[type="color"]{width:48px;height:36px;border:0;padding:0;background:transparent}
+    input[type="range"]{flex:1}
+    input[type="number"], input[type="text"]{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#031018;color:#fff}
+    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--accent);color:#121212}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .small-note{font-size:12px;color:#8fb0bb}
+    .controls-inline{display:flex;gap:8px;align-items:center}
   </style>
 </head>
 <body>
-  <h2>Multech Lightshow — 控制台（Extended）</h2>
+  <h2>Multech Lightshow — 控制面板（Full）</h2>
 
-  <label>颜色
-    <input id="color" type="color" value="#ff77aa">
-  </label>
+  <div class="grid">
+    <div class="panel">
+      <label>颜色</label>
+      <div class="row">
+        <input id="color" type="color" value="#ff77aa">
+        <div style="flex:1">
+          <div class="small-note">Hex value</div>
+          <input id="colorHex" type="text" value="#ff77aa" style="width:100%;margin-top:6px">
+        </div>
+      </div>
 
-  <label class="row">常亮
-    <button id="steady" class="btn-primary">Set Steady</button>
-  </label>
+      <label>常亮（Steady）</label>
+      <div class="row">
+        <button id="steadyBtn" class="btn btn-primary">Set Steady</button>
+        <button id="clearBtn" class="btn btn-ghost">Clear</button>
+      </div>
+    </div>
 
-  <label class="row">闪烁（ms）
-    <input id="blinkSpeed" type="range" min="80" max="1200" value="400">
-    <span id="blinkLabel">400 ms</span>
-    <button id="blinkBtn" class="btn-primary">Start Blink</button>
-  </label>
+    <div class="panel">
+      <label>闪烁（单色） — 速度可输入（ms）</label>
+      <div class="row">
+        <input id="blinkColor" type="color" value="#ff77aa">
+        <input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:100px">
+        <div class="controls-inline">
+          <button id="blinkBtn" class="btn btn-primary">Start Blink</button>
+        </div>
+      </div>
 
-  <label class="row">泡泡（数量）
-    <input id="bubbleCount" type="number" min="1" max="60" value="12" style="width:80px">
-    <button id="bubbleBtn" class="btn-primary">Spawn Bubbles</button>
-  </label>
+      <label style="margin-top:10px">闪烁（两色交替） — 可选颜色 A / B 与速度(ms)</label>
+      <div class="row">
+        <input id="blinkA" type="color" value="#ff77aa">
+        <input id="blinkB" type="color" value="#0077ff">
+        <input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:100px">
+        <div class="controls-inline">
+          <button id="blink2Btn" class="btn btn-primary">Start 2-color Blink</button>
+        </div>
+      </div>
 
-  <label class="row">飘字
-    <input id="floatText" type="text" placeholder="输入文字..." style="width:60%">
-    <input id="fontSize" type="number" min="12" max="72" value="28" style="width:80px">
-    <button id="textBtn" class="btn-primary">Send Text</button>
-  </label>
+      <label style="margin-top:10px">渐隐渐现（Fade in/out） — duration(ms)</label>
+      <div class="row">
+        <input id="fadeColor" type="color" value="#ff77aa">
+        <input id="fadeDur" type="number" min="200" max="10000" value="2200" style="width:120px">
+        <button id="fadeBtn" class="btn btn-primary">Play Fade</button>
+      </div>
+    </div>
 
-  <div style="margin-top:12px">
-    <button id="clear" class="btn-ghost">Clear Effects</button>
+    <div class="panel">
+      <label>泡泡（Bubble） — 数量 & spread</label>
+      <div class="row">
+        <input id="bubbleColor" type="color" value="#9ae0ff">
+        <input id="bubbleCount" type="number" min="1" max="80" value="12" style="width:90px">
+        <input id="bubbleSpread" type="number" min="0" max="400" value="0" style="width:90px">
+        <button id="bubbleBtn" class="btn btn-primary">Spawn Bubbles</button>
+      </div>
+
+      <label style="margin-top:10px">爱心（Heart） — size & duration & scale</label>
+      <div class="row">
+        <input id="heartColor" type="color" value="#ff77aa">
+        <input id="heartSize" type="number" min="40" max="300" value="120" style="width:100px">
+        <input id="heartDur" type="number" min="200" max="5000" value="1500" style="width:100px">
+        <button id="heartBtn" class="btn btn-primary">Send Heart</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <label>滚动文字（Marquee / 跑马灯） — 输入 & speed(ms)</label>
+      <div class="row">
+        <input id="marqText" type="text" placeholder="输入跑马灯文字..." style="flex:1">
+        <input id="marqSize" type="number" min="12" max="72" value="28" style="width:90px">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="marqSpeed" type="number" min="2000" max="40000" value="12000" style="width:140px">
+        <button id="marqBtn" class="btn btn-primary">Send Marquee</button>
+      </div>
+
+      <label style="margin-top:10px">飘字（从下往上） — 文本 & duration(ms) & fontsize</label>
+      <div class="row">
+        <input id="floatText" type="text" placeholder="输入上浮文字..." style="flex:1">
+        <input id="floatSize" type="number" min="12" max="72" value="28" style="width:90px">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="floatDur" type="number" min="400" max="10000" value="3000" style="width:140px">
+        <button id="floatBtn" class="btn btn-primary">Send Floating Text</button>
+      </div>
+    </div>
   </div>
 
+  <div style="height:12px"></div>
+  <div class="small-note">提示：每次发送会写入 Firebase `light/action` 节点。若要分区请告诉我我帮你加 `?area=` 参数支持。</div>
+
   <script type="module">
+    // ---------- Firebase 初始化 ----------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
@@ -63,50 +133,84 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     console.log("Controller connected to DB:", firebaseConfig.databaseURL);
+    // -------------------------------------
 
-    // UI 元素
-    const colorEl = document.getElementById('color');
-    const steadyBtn = document.getElementById('steady');
-    const blinkBtn = document.getElementById('blinkBtn');
-    const blinkSpeed = document.getElementById('blinkSpeed');
-    const blinkLabel = document.getElementById('blinkLabel');
-    const bubbleBtn = document.getElementById('bubbleBtn');
-    const bubbleCount = document.getElementById('bubbleCount');
-    const textInput = document.getElementById('floatText');
-    const textBtn = document.getElementById('textBtn');
-    const fontSizeEl = document.getElementById('fontSize');
-    const clearBtn = document.getElementById('clear');
-
-    blinkSpeed.oninput = () => blinkLabel.textContent = blinkSpeed.value + " ms";
-
+    // helper - write action
     function sendAction(obj) {
       set(ref(db, 'light/action'), {...obj, ts: Date.now()})
-        .then(()=> console.log('Sent:', obj))
-        .catch(err => console.error('Send failed:', err));
+        .then(()=> console.log('Sent action', obj))
+        .catch(err => console.error('Send failed', err));
     }
 
-    steadyBtn.onclick = () => {
-      sendAction({ type:'steady', color: colorEl.value });
-    };
+    // sync color hex input with text box
+    const color = document.getElementById('color');
+    const colorHex = document.getElementById('colorHex');
+    color.addEventListener('input', () => { colorHex.value = color.value; });
+    colorHex.addEventListener('change', () => { color.value = colorHex.value; });
 
-    blinkBtn.onclick = () => {
-      sendAction({ type:'blink', color: colorEl.value, speed: parseInt(blinkSpeed.value) });
+    // steady
+    document.getElementById('steadyBtn').onclick = () => {
+      sendAction({ type:'steady', color: color.value });
     };
-
-    bubbleBtn.onclick = () => {
-      const c = Math.max(1, Math.min(60, parseInt(bubbleCount.value || 12)));
-      sendAction({ type:'bubble', color: colorEl.value, count: c });
-    };
-
-    textBtn.onclick = () => {
-      const txt = (textInput.value || '').trim();
-      if (!txt) { alert('请输入要飘的文字'); return; }
-      sendAction({ type:'text', text: txt, color: colorEl.value, duration: 3000, fontSize: parseInt(fontSizeEl.value || 28) });
-      textInput.value = '';
-    };
-
-    clearBtn.onclick = () => {
+    document.getElementById('clearBtn').onclick = () => {
       sendAction({ type:'clear' });
+    };
+
+    // blink single
+    document.getElementById('blinkBtn').onclick = () => {
+      const c = document.getElementById('blinkColor').value;
+      const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blinkSpeed').value || 400)));
+      sendAction({ type:'blink', color: c, speed: s });
+    };
+
+    // blink two-color
+    document.getElementById('blink2Btn').onclick = () => {
+      const a = document.getElementById('blinkA').value;
+      const b = document.getElementById('blinkB').value;
+      const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blink2Speed').value || 400)));
+      sendAction({ type:'blink2', colorA: a, colorB: b, speed: s });
+    };
+
+    // fade
+    document.getElementById('fadeBtn').onclick = () => {
+      const c = document.getElementById('fadeColor').value;
+      const d = Math.max(200, Math.min(10000, parseInt(document.getElementById('fadeDur').value || 2200)));
+      sendAction({ type:'fade', color: c, duration: d });
+    };
+
+    // bubble
+    document.getElementById('bubbleBtn').onclick = () => {
+      const colorVal = document.getElementById('bubbleColor').value;
+      const count = Math.max(1, Math.min(80, parseInt(document.getElementById('bubbleCount').value || 12)));
+      const spread = Math.max(0, Math.min(400, parseInt(document.getElementById('bubbleSpread').value || 0)));
+      sendAction({ type:'bubble', color: colorVal, count: count, spread: spread });
+    };
+
+    // heart
+    document.getElementById('heartBtn').onclick = () => {
+      const colorVal = document.getElementById('heartColor').value;
+      const size = Math.max(40, Math.min(300, parseInt(document.getElementById('heartSize').value || 120)));
+      const dur = Math.max(200, Math.min(5000, parseInt(document.getElementById('heartDur').value || 1500)));
+      sendAction({ type:'heart', color: colorVal, size: size, duration: dur, scaleFrom:0.2, scaleTo:1.6 });
+    };
+
+    // marquee
+    document.getElementById('marqBtn').onclick = () => {
+      const txt = (document.getElementById('marqText').value || '').trim();
+      if (!txt) return alert('请输入跑马灯文字');
+      const speed = Math.max(2000, Math.min(40000, parseInt(document.getElementById('marqSpeed').value || 12000)));
+      const fontSize = Math.max(12, Math.min(72, parseInt(document.getElementById('marqSize').value || 28)));
+      sendAction({ type:'marquee', text: txt, speed: speed, fontSize: fontSize, color: document.getElementById('color').value });
+    };
+
+    // floating text
+    document.getElementById('floatBtn').onclick = () => {
+      const txt = (document.getElementById('floatText').value || '').trim();
+      if (!txt) return alert('请输入飘字内容');
+      const dur = Math.max(400, Math.min(10000, parseInt(document.getElementById('floatDur').value || 3000)));
+      const fontSize = Math.max(12, Math.min(72, parseInt(document.getElementById('floatSize').value || 28)));
+      sendAction({ type:'text', text: txt, duration: dur, fontSize: fontSize, color: document.getElementById('color').value });
+      document.getElementById('floatText').value = '';
     };
   </script>
 </body>
