@@ -10,7 +10,7 @@
     .row{display:flex;gap:8px;align-items:center}
     button{padding:8px 12px;margin-top:12px;cursor:pointer;border:0;border-radius:6px}
     .btn-primary{background:#ff4da6;color:#111}
-    .btn-ghost{background:transparent;border:1px solid #444}
+    .btn-ghost{background:transparent;border:1px solid #444;color:#ccc}
   </style>
 </head>
 <body>
@@ -43,20 +43,24 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    // ---------- Firebase 初始化 ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-    // ---------- 把以下 firebaseConfig 替换为你的项目信息 ----------
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
+      apiKey: "AIzaSyDkvbK-ubU4NKdUXGcj1vKgMNTsb7X2BTg",
+      authDomain: "multech-lightshow.firebaseapp.com",
+      databaseURL: "https://multech-lightshow-default-rtdb.firebaseio.com",
+      projectId: "multech-lightshow",
+      storageBucket: "multech-lightshow.firebasestorage.app",
+      messagingSenderId: "237208759699",
+      appId: "1:237208759699:web:dab1eb9f877811e687cc66",
+      measurementId: "G-0YF1GWCWRV"
     };
-    // ----------------------------------------------------------------
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    console.log("Controller connected to DB:", firebaseConfig.databaseURL);
+    // -------------------------------------
 
     const colorEl = document.getElementById('color');
     const sizeEl = document.getElementById('size');
@@ -70,9 +74,10 @@
     durEl.oninput = () => durLabel.textContent = durEl.value;
     scaleEl.oninput = () => scaleLabel.textContent = scaleEl.value;
 
-    function sendAction(obj) {
-      const payload = { ...obj, ts: Date.now() };
-      set(ref(db, 'light/action'), payload);
+    function sendAction(payload) {
+      set(ref(db, 'light/action'), { ...payload, ts: Date.now() })
+        .then(() => console.log('✅ Action written:', payload))
+        .catch(err => console.error('❌ Write failed:', err));
     }
 
     document.getElementById('play').onclick = () => {
@@ -103,7 +108,7 @@
     };
 
     document.getElementById('colorBtn').onclick = () => {
-      set(ref(db, 'light/action'), { type:'color', color: colorEl.value, ts: Date.now() });
+      sendAction({ type:'color', color: colorEl.value });
     };
 
     document.getElementById('clear').onclick = () => {
