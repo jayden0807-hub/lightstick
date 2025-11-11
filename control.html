@@ -2,48 +2,51 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightshow Controller</title>
+  <title>Multech Lightshow Controller (Extended)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:sans-serif;padding:20px;background:#0f1720;color:#fff}
-    label{display:block;margin-top:12px}
+    body{font-family:sans-serif;padding:18px;background:#071024;color:#fff}
+    label{display:block;margin-top:10px}
     .row{display:flex;gap:8px;align-items:center}
+    input[type="text"]{padding:6px;border-radius:6px;border:1px solid #333;background:#06202b;color:#fff}
     button{padding:8px 12px;margin-top:12px;cursor:pointer;border:0;border-radius:6px}
-    .btn-primary{background:#ff4da6;color:#111}
-    .btn-ghost{background:transparent;border:1px solid #444;color:#ccc}
+    .btn-primary{background:#ff5fa8;color:#111}
+    .btn-ghost{background:transparent;border:1px solid #30424a;color:#cfe}
   </style>
 </head>
 <body>
-  <h2>Multech Lightshow — 控制台</h2>
+  <h2>Multech Lightshow — 控制台（Extended）</h2>
 
   <label>颜色
     <input id="color" type="color" value="#ff77aa">
   </label>
 
-  <label class="row">尺寸（px）
-    <input id="size" type="range" min="40" max="240" value="120">
-    <span id="sizeLabel">120</span>
+  <label class="row">常亮
+    <button id="steady" class="btn-primary">Set Steady</button>
   </label>
 
-  <label class="row">持续时间（ms）
-    <input id="duration" type="range" min="400" max="4000" value="1500">
-    <span id="durLabel">1500</span>
+  <label class="row">闪烁（ms）
+    <input id="blinkSpeed" type="range" min="80" max="1200" value="400">
+    <span id="blinkLabel">400 ms</span>
+    <button id="blinkBtn" class="btn-primary">Start Blink</button>
   </label>
 
-  <label class="row">放大倍数（scale）
-    <input id="scale" type="range" min="0.4" max="3.0" step="0.1" value="1.6">
-    <span id="scaleLabel">1.6</span>
+  <label class="row">泡泡（数量）
+    <input id="bubbleCount" type="number" min="1" max="60" value="12" style="width:80px">
+    <button id="bubbleBtn" class="btn-primary">Spawn Bubbles</button>
   </label>
 
-  <div style="margin-top:14px">
-    <button id="play" class="btn-primary">Play Heart</button>
-    <button id="burst" class="btn-primary">Burst 5 Hearts</button>
-    <button id="colorBtn" class="btn-ghost">Broadcast Background Color</button>
-    <button id="clear" class="btn-ghost">Clear Action</button>
+  <label class="row">飘字
+    <input id="floatText" type="text" placeholder="输入文字..." style="width:60%">
+    <input id="fontSize" type="number" min="12" max="72" value="28" style="width:80px">
+    <button id="textBtn" class="btn-primary">Send Text</button>
+  </label>
+
+  <div style="margin-top:12px">
+    <button id="clear" class="btn-ghost">Clear Effects</button>
   </div>
 
   <script type="module">
-    // ---------- Firebase 初始化 ----------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
@@ -60,59 +63,50 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     console.log("Controller connected to DB:", firebaseConfig.databaseURL);
-    // -------------------------------------
 
+    // UI 元素
     const colorEl = document.getElementById('color');
-    const sizeEl = document.getElementById('size');
-    const sizeLabel = document.getElementById('sizeLabel');
-    const durEl = document.getElementById('duration');
-    const durLabel = document.getElementById('durLabel');
-    const scaleEl = document.getElementById('scale');
-    const scaleLabel = document.getElementById('scaleLabel');
+    const steadyBtn = document.getElementById('steady');
+    const blinkBtn = document.getElementById('blinkBtn');
+    const blinkSpeed = document.getElementById('blinkSpeed');
+    const blinkLabel = document.getElementById('blinkLabel');
+    const bubbleBtn = document.getElementById('bubbleBtn');
+    const bubbleCount = document.getElementById('bubbleCount');
+    const textInput = document.getElementById('floatText');
+    const textBtn = document.getElementById('textBtn');
+    const fontSizeEl = document.getElementById('fontSize');
+    const clearBtn = document.getElementById('clear');
 
-    sizeEl.oninput = () => sizeLabel.textContent = sizeEl.value;
-    durEl.oninput = () => durLabel.textContent = durEl.value;
-    scaleEl.oninput = () => scaleLabel.textContent = scaleEl.value;
+    blinkSpeed.oninput = () => blinkLabel.textContent = blinkSpeed.value + " ms";
 
-    function sendAction(payload) {
-      set(ref(db, 'light/action'), { ...payload, ts: Date.now() })
-        .then(() => console.log('✅ Action written:', payload))
-        .catch(err => console.error('❌ Write failed:', err));
+    function sendAction(obj) {
+      set(ref(db, 'light/action'), {...obj, ts: Date.now()})
+        .then(()=> console.log('Sent:', obj))
+        .catch(err => console.error('Send failed:', err));
     }
 
-    document.getElementById('play').onclick = () => {
-      sendAction({
-        type:'heart',
-        color: colorEl.value,
-        duration: parseInt(durEl.value),
-        scaleFrom: 0.2,
-        scaleTo: parseFloat(scaleEl.value),
-        size: parseInt(sizeEl.value)
-      });
+    steadyBtn.onclick = () => {
+      sendAction({ type:'steady', color: colorEl.value });
     };
 
-    document.getElementById('burst').onclick = async () => {
-      for (let i=0;i<5;i++) {
-        sendAction({
-          type:'heart',
-          color: colorEl.value,
-          duration: parseInt(durEl.value),
-          scaleFrom: 0.2,
-          scaleTo: parseFloat(scaleEl.value),
-          size: parseInt(sizeEl.value),
-          x: Math.random(),
-          y: Math.random() * 0.7 + 0.15
-        });
-        await new Promise(r => setTimeout(r, 120));
-      }
+    blinkBtn.onclick = () => {
+      sendAction({ type:'blink', color: colorEl.value, speed: parseInt(blinkSpeed.value) });
     };
 
-    document.getElementById('colorBtn').onclick = () => {
-      sendAction({ type:'color', color: colorEl.value });
+    bubbleBtn.onclick = () => {
+      const c = Math.max(1, Math.min(60, parseInt(bubbleCount.value || 12)));
+      sendAction({ type:'bubble', color: colorEl.value, count: c });
     };
 
-    document.getElementById('clear').onclick = () => {
-      set(ref(db, 'light/action'), null);
+    textBtn.onclick = () => {
+      const txt = (textInput.value || '').trim();
+      if (!txt) { alert('请输入要飘的文字'); return; }
+      sendAction({ type:'text', text: txt, color: colorEl.value, duration: 3000, fontSize: parseInt(fontSizeEl.value || 28) });
+      textInput.value = '';
+    };
+
+    clearBtn.onclick = () => {
+      sendAction({ type:'clear' });
     };
   </script>
 </body>

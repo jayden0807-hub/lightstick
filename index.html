@@ -2,42 +2,34 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Virtual Lightstick — Audience</title>
+  <title>Multech Virtual Lightstick — Audience (Extended)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html,body { height:100%; margin:0; background:#000; overflow:hidden; }
-    #stage { position:relative; width:100%; height:100%; }
-    .bg { position:absolute; inset:0; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02), rgba(0,0,0,0.6)); z-index:0; pointer-events:none; }
-    .heart {
+    #stage { position:relative; width:100%; height:100%; touch-action: none; }
+    .bg { position:absolute; inset:0; z-index:0; pointer-events:none; background:#000 }
+    .bubble {
       position:absolute;
-      width: 120px; height: 120px;
-      transform-origin:center center;
-      opacity:0;
-      pointer-events:none;
-      will-change: transform, opacity, filter;
-      z-index:10;
-      filter: drop-shadow(0 0 18px rgba(255,100,160,0.45));
+      width:12px; height:12px; border-radius:50%;
+      pointer-events:none; opacity:0.95; will-change: transform, opacity;
+      mix-blend-mode: screen; z-index:9;
     }
-    .particle {
-      position:absolute;
-      width:8px; height:8px;
-      border-radius:50%;
-      pointer-events:none;
-      opacity:0.95;
-      will-change: transform, opacity;
-      z-index:9;
-      mix-blend-mode: screen;
+    .floating-text {
+      position:absolute; left:50%; transform:translateX(-50%);
+      color:#fff; font-weight:700; font-size:20px; white-space:nowrap;
+      text-shadow: 0 0 10px rgba(0,0,0,0.6); pointer-events:none; z-index:11;
     }
+    .heart { position:absolute; width:120px; height:120px; pointer-events:none; z-index:10; }
   </style>
 </head>
 <body>
-  <div id="stage"><div class="bg"></div></div>
+  <div id="stage"><div class="bg" id="bg"></div></div>
 
   <script type="module">
-    // ---------- Firebase 初始化 ----------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
+    // ---------- Firebase 配置（保持与你 control.html 一致） ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDkvbK-ubU4NKdUXGcj1vKgMNTsb7X2BTg",
       authDomain: "multech-lightshow.firebaseapp.com",
@@ -51,18 +43,122 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     console.log("Audience connected to DB:", firebaseConfig.databaseURL);
-    // -------------------------------------
+    // -----------------------------------------------------------------
 
     const stage = document.getElementById('stage');
-    const actionRef = ref(db, 'light/action');
+    const bg = document.getElementById('bg');
 
+    // 用来管理闪烁 interval（每个客户端本地运行）
+    let blinkInterval = null;
+
+    // 监听 action 节点
+    const actionRef = ref(db, 'light/action');
     onValue(actionRef, (snap) => {
       const action = snap.val();
       if (!action) return;
-      if (action.type === 'heart') spawnHeart(action);
-      if (action.type === 'color') document.body.style.background = action.color;
+      handleAction(action);
     });
 
+    function clearEffects() {
+      // 停止闪烁
+      if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
+      // 恢复默认背景
+      bg.style.background = '#000';
+      // 移除舞台上的临时元素（泡泡、文字、心等）
+      document.querySelectorAll('.bubble, .floating-text, .heart').forEach(el => el.remove());
+    }
+
+    function handleAction(action) {
+      // action: { type: 'steady'|'blink'|'bubble'|'text'|'clear', color, speed, count, text, fontSize, duration, ts }
+      const t = action.type;
+      if (t === 'clear') { clearEffects(); return; }
+      if (t === 'steady') {
+        // 常亮：设置背景颜色并移除其他临时效果
+        clearEffects();
+        bg.style.background = action.color || '#ff77aa';
+      } else if (t === 'blink') {
+        // 闪烁：按 speed(ms) 切换背景色/黑
+        clearEffects();
+        const color = action.color || '#ff77aa';
+        const speed = parseInt(action.speed || 400);
+        let on = false;
+        blinkInterval = setInterval(() => {
+          bg.style.background = on ? color : '#000';
+          on = !on;
+        }, speed);
+      } else if (t === 'bubble') {
+        // 泡泡：生成 count 个泡泡，自动上浮后移除
+        const count = parseInt(action.count || 12);
+        const color = action.color || '#9ae0ff';
+        const spread = parseInt(action.spread || 0); // if 0 random horizontal
+        for (let i=0;i<count;i++){
+          setTimeout(() => spawnBubble({color, spread}), i*80);
+        }
+      } else if (t === 'text') {
+        // 飘字：在底部生成文字，从下往上漂移并淡出
+        spawnText({
+          text: action.text || '',
+          color: action.color || '#ffffff',
+          duration: parseInt(action.duration || 3000),
+          fontSize: parseInt(action.fontSize || 28)
+        });
+      } else if (t === 'heart') {
+        // 保留之前心的效果（原版）
+        spawnHeart(action);
+      }
+    }
+
+    // ---------- 视觉辅助函数 ----------
+    function spawnBubble({color='#9ae0ff', spread=0}) {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const el = document.createElement('div');
+      el.className = 'bubble';
+      const size = 8 + Math.random()*18;
+      el.style.width = el.style.height = size + 'px';
+      const x = Math.random() * vw;
+      const startY = vh + 20;
+      el.style.left = x + 'px';
+      el.style.top = startY + 'px';
+      el.style.background = color;
+      stage.appendChild(el);
+
+      const endY = Math.random()*vh*0.4; // 飘到屏幕上部附近
+      const tx = (spread>0) ? (Math.random()*spread - spread/2) : (Math.random()*120 - 60);
+
+      const dur = 2000 + Math.random()*1800;
+      el.style.transition = `transform ${dur/1000}s linear, opacity ${dur/1000}s linear`;
+      requestAnimationFrame(() => {
+        el.style.transform = `translate(${tx}px, ${- (startY - endY) }px) scale(${0.4 + Math.random()*0.9})`;
+        el.style.opacity = 0;
+      });
+      setTimeout(()=> el.remove(), dur + 80);
+    }
+
+    function spawnText({text='#', color='#fff', duration=3000, fontSize=28}) {
+      const el = document.createElement('div');
+      el.className = 'floating-text';
+      el.textContent = text;
+      el.style.color = color;
+      el.style.fontSize = fontSize + 'px';
+      // 初始 y 在底部外
+      const vw = window.innerWidth;
+      const startY = window.innerHeight + 40;
+      const left = Math.random()*0.6 + 0.2; // 20% ~ 80% 随机横向位置相对
+      el.style.left = (left*100) + '%';
+      el.style.top = startY + 'px';
+      stage.appendChild(el);
+
+      // 目标向上移动一段距离
+      const moveUp = window.innerHeight*0.6 + (Math.random()*80 - 40);
+      el.style.transition = `transform ${duration/1000}s ease-out, opacity ${duration/1000}s linear`;
+      requestAnimationFrame(() => {
+        el.style.transform = `translateY(-${moveUp}px)`;
+        el.style.opacity = 0;
+      });
+      setTimeout(()=> el.remove(), duration + 200);
+    }
+
+    // 兼容保留的心形函数（来自之前版本）
     function spawnHeart(params = {}) {
       const {
         color = '#ff77aa',
@@ -73,11 +169,9 @@
         y = null,
         size = 120
       } = params;
-
       const vw = window.innerWidth, vh = window.innerHeight;
       const posX = (x === null) ? (Math.random() * 0.8 + 0.1) * vw : x * vw;
       const posY = (y === null) ? (Math.random() * 0.6 + 0.2) * vh : y * vh;
-
       const heart = document.createElementNS("http://www.w3.org/2000/svg","svg");
       heart.setAttribute('viewBox','0 0 32 29');
       heart.classList.add('heart');
@@ -85,16 +179,13 @@
       heart.style.height = size + 'px';
       heart.style.left = (posX - size/2) + 'px';
       heart.style.top = (posY - size/2) + 'px';
-
       const path = document.createElementNS("http://www.w3.org/2000/svg","path");
       path.setAttribute('d','M23.6,0C20.6,0,18,1.9,16,4.4C14,1.9,11.4,0,8.4,0C3.7,0,0,3.6,0,8.3c0,9.2,16,20.7,16,20.7S32,17.6,32,8.3 C32,3.6,28.3,0,23.6,0z');
       path.setAttribute('fill', color);
       heart.appendChild(path);
-
       heart.style.transform = `scale(${scaleFrom})`;
       heart.style.opacity = '0';
       heart.style.filter = `drop-shadow(0 0 12px ${color})`;
-
       stage.appendChild(heart);
       void heart.offsetWidth;
       heart.style.transition = `transform ${duration/1000}s cubic-bezier(.2,.9,.3,1), opacity ${duration/1000}s linear`;
@@ -102,36 +193,15 @@
         heart.style.transform = `scale(${scaleTo})`;
         heart.style.opacity = '0.95';
       });
-
-      createParticles({x: posX, y: posY, color, count: 10, spread: 140});
-      setTimeout(() => { heart.style.opacity = '0'; setTimeout(() => heart.remove(), 400); }, duration);
+      setTimeout(() => { heart.style.opacity = '0'; setTimeout(() => heart.remove(), 350); }, duration);
     }
 
-    function createParticles({x, y, color='#ff9abf', count=10, spread=120}) {
-      for (let i=0;i<count;i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = (x - 4) + 'px';
-        p.style.top = (y - 4) + 'px';
-        p.style.width = p.style.height = (Math.random()*8 + 4) + 'px';
-        p.style.background = color;
-        stage.appendChild(p);
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * spread;
-        const tx = Math.cos(angle) * dist;
-        const ty = Math.sin(angle) * dist - Math.random()*20;
-        const dur = 800 + Math.random()*800;
-        p.style.transition = `transform ${dur/1000}s cubic-bezier(.08,.9,.4,1), opacity ${dur/1000}s linear`;
-        requestAnimationFrame(() => {
-          p.style.transform = `translate(${tx}px, ${ty}px) scale(${0.3 + Math.random()*1.2})`;
-          p.style.opacity = 0;
-        });
-        setTimeout(() => p.remove(), dur + 60);
+    // 本地调试按键
+    window.addEventListener('keydown', e => {
+      if (e.key === 'b') { // b 发泡泡
+        for (let i=0;i<8;i++) setTimeout(()=> spawnBubble({}), i*80);
       }
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'h') spawnHeart({ color:'#ff99c8', duration:1200, scaleFrom:0.2, scaleTo:1.8 });
+      if (e.key === 't') spawnText({text:'Hello Multech!', color:'#ffd6e9', duration:3500, fontSize:30});
     });
   </script>
 </body>
