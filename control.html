@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightshow — Controller (Final)</title>
+  <title>Multech Lightshow — Controller (Final Rewrite)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{--bg:#071024;--panel:#0b2230;--accent:#ff5fa8;--muted:#8fb0bb}
@@ -14,7 +14,6 @@
     .row{display:flex;gap:8px;align-items:center;margin-top:8px}
     input[type="color"]{width:48px;height:36px;border:0;background:transparent}
     input[type="number"],input[type="text"]{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#031018;color:#fff}
-    input[type="range"]{flex:1}
     button{padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
     .btn-primary{background:var(--accent);color:#081018}
     .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe}
@@ -26,83 +25,37 @@
 
   <div class="grid">
     <div class="panel">
-      <label>主颜色</label>
-      <div class="row">
-        <input id="color" type="color" value="#ff77aa">
-        <input id="colorHex" type="text" value="#ff77aa" style="flex:1">
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button id="steadyBtn" class="btn-primary">Set Steady</button>
-        <button id="clearAllBtn" class="btn-ghost">Clear All</button>
-      </div>
+      <label>Main color</label>
+      <div class="row"><input id="mainColor" type="color" value="#ff77aa"><input id="mainHex" type="text" value="#ff77aa" style="flex:1"></div>
+      <div class="row" style="margin-top:8px"><button id="steadyBtn" class="btn-primary">Set Steady</button><button id="clearAllBtn" class="btn-ghost">Clear All</button></div>
     </div>
 
     <div class="panel">
-      <label>闪烁（单色） speed (ms)</label>
-      <div class="row">
-        <input id="blinkColor" type="color" value="#ff77aa">
-        <input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:90px">
-        <button id="blinkBtn" class="btn-primary">Start Blink</button>
-        <button id="clearBlinkBtn" class="btn-ghost">Clear Blink</button>
-      </div>
+      <label>Blink (single) — speed (ms)</label>
+      <div class="row"><input id="blinkColor" type="color" value="#ff77aa"><input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:90px"><button id="blinkBtn" class="btn-primary">Start Blink</button><button id="clearBlinkBtn" class="btn-ghost">Clear Blink</button></div>
 
-      <label style="margin-top:8px">闪烁（两色） A / B / speed(ms)</label>
-      <div class="row">
-        <input id="blinkA" type="color" value="#ff77aa">
-        <input id="blinkB" type="color" value="#0077ff">
-        <input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:90px">
-        <button id="blink2Btn" class="btn-primary">Start 2-color Blink</button>
-        <button id="clearBlink2Btn" class="btn-ghost">Clear Blink2</button>
-      </div>
+      <label style="margin-top:8px">Blink (two-color) — A / B / speed</label>
+      <div class="row"><input id="blinkA" type="color" value="#ff77aa"><input id="blinkB" type="color" value="#0077ff"><input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:90px"><button id="blink2Btn" class="btn-primary">Start 2-color</button><button id="clearBlink2Btn" class="btn-ghost">Clear Blink2</button></div>
     </div>
 
     <div class="panel">
-      <label>泡泡（Bubble） — color / count / spread</label>
-      <div class="row">
-        <input id="bubbleColor" type="color" value="#9ae0ff">
-        <input id="bubbleCount" type="number" min="1" max="400" value="60" style="width:90px">
-      </div>
-      <div class="row">
-        <label style="width:60px">spread</label>
-        <input id="bubbleSpread" type="number" min="0" max="1000" value="400" style="width:90px">
-        <button id="bubbleBtn" class="btn-primary">Spawn Bubbles (Full Page)</button>
-        <button id="clearBubbleBtn" class="btn-ghost">Clear Bubbles</button>
-      </div>
+      <label>Bubble — color / count / spread</label>
+      <div class="row"><input id="bubbleColor" type="color" value="#9ae0ff"><input id="bubbleCount" type="number" min="1" max="400" value="60" style="width:90px"></div>
+      <div class="row"><label style="width:60px">spread</label><input id="bubbleSpread" type="number" min="0" max="1000" value="400" style="width:90px"><button id="bubbleBtn" class="btn-primary">Spawn Bubbles</button><button id="clearBubbleBtn" class="btn-ghost">Clear Bubbles</button></div>
 
-      <label style="margin-top:10px">爱心（Heart） — single / blast (behaves like bubble)</label>
-      <div class="row">
-        <input id="heartColor" type="color" value="#ff77aa">
-        <input id="heartCount" type="number" min="1" max="400" value="24" style="width:90px">
-      </div>
-      <div class="row">
-        <button id="heartBtn" class="btn-primary">Send 1 Heart</button>
-        <button id="heartBlastBtn" class="btn-primary">Heart Blast</button>
-        <button id="clearHeartBtn" class="btn-ghost">Clear Hearts</button>
-      </div>
+      <label style="margin-top:10px">Heart (behaves like bubble) — color / count</label>
+      <div class="row"><input id="heartColor" type="color" value="#ff77aa"><input id="heartCount" type="number" min="1" max="400" value="24" style="width:90px"></div>
+      <div class="row"><button id="heartBtn" class="btn-primary">Send 1 Heart</button><button id="heartBlastBtn" class="btn-primary">Heart Blast</button><button id="clearHeartBtn" class="btn-ghost">Clear Hearts</button></div>
 
-      <label style="margin-top:10px">星星（Star） — single / blast (behaves like bubble)</label>
-      <div class="row">
-        <input id="starColor" type="color" value="#fff1a8">
-        <input id="starCount" type="number" min="1" max="400" value="20" style="width:90px">
-      </div>
-      <div class="row">
-        <button id="starBtn" class="btn-primary">Send 1 Star</button>
-        <button id="starBlastBtn" class="btn-primary">Star Blast</button>
-        <button id="clearStarBtn" class="btn-ghost">Clear Stars</button>
-      </div>
+      <label style="margin-top:10px">Star (behaves like bubble) — color / count</label>
+      <div class="row"><input id="starColor" type="color" value="#fff1a8"><input id="starCount" type="number" min="1" max="400" value="20" style="width:90px"></div>
+      <div class="row"><button id="starBtn" class="btn-primary">Send 1 Star</button><button id="starBlastBtn" class="btn-primary">Star Blast</button><button id="clearStarBtn" class="btn-ghost">Clear Stars</button></div>
     </div>
 
     <div class="panel">
-      <label>跑马灯（Marquee） — text / speed(ms) / fontsize</label>
-      <div class="row">
-        <input id="marqText" type="text" placeholder="输入跑马灯文字..." style="flex:1">
-        <input id="marqSize" type="number" min="12" max="72" value="28" style="width:90px">
-      </div>
-      <div class="row">
-        <input id="marqSpeed" type="number" min="1000" max="60000" value="12000" style="width:120px">
-        <button id="marqBtn" class="btn-primary">Send Marquee</button>
-        <button id="clearMarqBtn" class="btn-ghost">Clear Marquee</button>
-      </div>
+      <label>Marquee — text / speed(ms) / fontsize</label>
+      <div class="row"><input id="marqText" type="text" placeholder="输入跑马灯..." style="flex:1"><input id="marqSize" type="number" min="12" max="72" value="28" style="width:90px"></div>
+      <div class="row"><input id="marqSpeed" type="number" min="1000" max="60000" value="12000" style="width:120px"><button id="marqBtn" class="btn-primary">Send Marquee</button><button id="clearMarqBtn" class="btn-ghost">Clear Marquee</button></div>
     </div>
   </div>
 
@@ -124,76 +77,81 @@
     const db = getDatabase(app);
     console.log('Controller DB ready:', firebaseConfig.databaseURL);
 
-    const send = (o) => set(ref(db,'light/action'), {...o, ts:Date.now()}).then(()=>console.log('sent',o)).catch(e=>console.error(e));
+    // expose send for debug
+    window.send = (o) => set(ref(db,'light/action'), {...o, ts:Date.now()}).then(()=>console.log('sent',o)).catch(e=>console.error(e));
 
-    // color sync
-    const color = document.getElementById('color'), colorHex = document.getElementById('colorHex');
-    color.addEventListener('input', ()=> colorHex.value = color.value);
-    colorHex.addEventListener('change', ()=> color.value = colorHex.value);
+    // helper local
+    const sendAction = (obj) => window.send(obj);
 
-    document.getElementById('steadyBtn').onclick = ()=> send({ type:'steady', color: color.value });
-    document.getElementById('clearAllBtn').onclick = ()=> send({ type:'clear' });
+    const mainColor = document.getElementById('mainColor'), mainHex = document.getElementById('mainHex');
+    mainColor.addEventListener('input', ()=> mainHex.value = mainColor.value);
+    mainHex.addEventListener('change', ()=> mainColor.value = mainHex.value);
+
+    document.getElementById('steadyBtn').onclick = ()=> sendAction({ type:'steady', color: mainColor.value });
+    document.getElementById('clearAllBtn').onclick = ()=> sendAction({ type:'clear' });
 
     // blink
     document.getElementById('blinkBtn').onclick = ()=> {
       const c = document.getElementById('blinkColor').value;
       const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blinkSpeed').value||400)));
-      send({ type:'blink', color: c, speed: s });
+      sendAction({ type:'blink', color: c, speed: s });
     };
-    document.getElementById('clearBlinkBtn').onclick = ()=> send({ type:'clear_effect', effect:'blink' });
+    document.getElementById('clearBlinkBtn').onclick = ()=> sendAction({ type:'clear_effect', effect:'blink' });
 
     // blink2
     document.getElementById('blink2Btn').onclick = ()=> {
       const a = document.getElementById('blinkA').value, b = document.getElementById('blinkB').value;
       const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blink2Speed').value||400)));
-      send({ type:'blink2', colorA: a, colorB: b, speed: s });
+      sendAction({ type:'blink2', colorA: a, colorB: b, speed: s });
     };
-    document.getElementById('clearBlink2Btn').onclick = ()=> send({ type:'clear_effect', effect:'blink2' });
+    document.getElementById('clearBlink2Btn').onclick = ()=> sendAction({ type:'clear_effect', effect:'blink2' });
 
     // bubble
     document.getElementById('bubbleBtn').onclick = ()=> {
       const c = document.getElementById('bubbleColor').value;
       const count = Math.max(1, Math.min(400, parseInt(document.getElementById('bubbleCount').value||60)));
       const spread = Math.max(0, Math.min(1000, parseInt(document.getElementById('bubbleSpread').value||400)));
-      send({ type:'bubble', color: c, count: count, spread: spread });
+      sendAction({ type:'bubble', color: c, count: count, spread: spread });
     };
-    document.getElementById('clearBubbleBtn').onclick = ()=> send({ type:'clear_effect', effect:'bubble' });
+    document.getElementById('clearBubbleBtn').onclick = ()=> sendAction({ type:'clear_effect', effect:'bubble' });
 
-    // heart single / blast (behave like bubble)
+    // heart
     document.getElementById('heartBtn').onclick = ()=> {
       const c = document.getElementById('heartColor').value;
-      send({ type:'heart', color: c, size: 72 });
+      sendAction({ type:'heart', color: c, count: 1 });
     };
     document.getElementById('heartBlastBtn').onclick = ()=> {
       const c = document.getElementById('heartColor').value;
-      const count = Math.max(1, Math.min(400, parseInt(document.getElementById('heartCount').value||30)));
-      send({ type:'heart_blast', color: c, count: count });
+      const count = Math.max(1, Math.min(400, parseInt(document.getElementById('heartCount').value||24)));
+      sendAction({ type:'heart_blast', color: c, count: count });
     };
-    document.getElementById('clearHeartBtn').onclick = ()=> send({ type:'clear_effect', effect:'heart' });
+    document.getElementById('clearHeartBtn').onclick = ()=> sendAction({ type:'clear_effect', effect:'heart' });
 
-    // star single / blast
+    // star
     document.getElementById('starBtn').onclick = ()=> {
       const c = document.getElementById('starColor').value;
-      send({ type:'star', color: c, size: 72 });
+      sendAction({ type:'star', color: c, count: 1 });
     };
     document.getElementById('starBlastBtn').onclick = ()=> {
       const c = document.getElementById('starColor').value;
       const count = Math.max(1, Math.min(400, parseInt(document.getElementById('starCount').value||20)));
-      send({ type:'star_blast', color: c, count: count });
+      sendAction({ type:'star_blast', color: c, count: count });
     };
-    document.getElementById('clearStarBtn').onclick = ()=> send({ type:'clear_effect', effect:'star' });
+    document.getElementById('clearStarBtn').onclick = ()=> sendAction({ type:'clear_effect', effect:'star' });
 
-    // marquee (right->left exact text)
+    // marquee
     document.getElementById('marqBtn').onclick = ()=> {
       const txt = (document.getElementById('marqText').value||'').trim();
       if (!txt) return alert('请输入跑马灯文字');
       const speed = Math.max(1000, Math.min(60000, parseInt(document.getElementById('marqSpeed').value||12000)));
       const fs = Math.max(12, Math.min(72, parseInt(document.getElementById('marqSize').value||28)));
-      send({ type:'marquee', text: txt, speed: speed, fontSize: fs, color: color.value });
+      sendAction({ type:'marquee', text: txt, speed: speed, fontSize: fs, color: mainColor.value });
       document.getElementById('marqText').value = '';
     };
-    document.getElementById('clearMarqBtn').onclick = ()=> send({ type:'clear_effect', effect:'marquee' });
+    document.getElementById('clearMarqBtn').onclick = ()=> sendAction({ type:'clear_effect', effect:'marquee' });
 
+    // expose convenience
+    window._multech_send = window.send;
   </script>
 </body>
 </html>
