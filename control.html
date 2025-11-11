@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightshow — Controller (v2)</title>
+  <title>Multech Lightshow — Controller (final)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{--bg:#071024;--panel:#0b2230;--accent:#ff5fa8;--muted:#8fb0bb}
@@ -22,7 +22,7 @@
   </style>
 </head>
 <body>
-  <h2>Multech Lightshow — Controller (v2)</h2>
+  <h2>Multech Lightshow — Controller (final)</h2>
 
   <div class="grid">
     <div class="panel">
@@ -33,10 +33,21 @@
 
     <div class="panel">
       <label>Blink (single) — speed (ms)</label>
-      <div class="row"><input id="blinkColor" type="color" value="#ff77aa"><input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:90px"><button id="blinkBtn" class="btn-primary">Start Blink</button><button id="clearBlinkBtn" class="btn-ghost">Clear Blink</button></div>
+      <div class="row">
+        <input id="blinkColor" type="color" value="#ff77aa">
+        <input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:90px">
+        <button id="blinkBtn" class="btn-primary">Start Blink</button>
+        <button id="clearBlinkBtn" class="btn-ghost">Clear Blink</button>
+      </div>
 
       <label style="margin-top:8px">Blink (two-color) — A / B / speed</label>
-      <div class="row"><input id="blinkA" type="color" value="#ff77aa"><input id="blinkB" type="color" value="#0077ff"><input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:90px"><button id="blink2Btn" class="btn-primary">Start 2-color</button><button id="clearBlink2Btn" class="btn-ghost">Clear Blink2</button></div>
+      <div class="row">
+        <input id="blinkA" type="color" value="#ff77aa">
+        <input id="blinkB" type="color" value="#0077ff">
+        <input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:90px">
+        <button id="blink2Btn" class="btn-primary">Start 2-color</button>
+        <button id="clearBlink2Btn" class="btn-ghost">Clear Blink2</button>
+      </div>
     </div>
 
     <div class="panel">
@@ -78,9 +89,8 @@
     const db = getDatabase(app);
     console.log('Controller DB ready:', firebaseConfig.databaseURL);
 
-    // expose send for console debug: window.send({...})
+    // expose send for console debug
     window.send = (obj) => set(ref(db,'light/action'), {...obj, ts: Date.now()}).then(()=>console.log('sent',obj)).catch(e=>console.error(e));
-    // convenience alias
     window._multech_send = window.send;
 
     // sync main color
@@ -91,7 +101,7 @@
     document.getElementById('steadyBtn').onclick = ()=> window.send({ type:'steady', color: mainColor.value });
     document.getElementById('clearAllBtn').onclick = ()=> window.send({ type:'clear' });
 
-    // blink (single)
+    // blink single
     document.getElementById('blinkBtn').onclick = ()=> {
       const c = document.getElementById('blinkColor').value;
       const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blinkSpeed').value||400)));
