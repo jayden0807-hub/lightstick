@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Multech Lightshow Controller</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:sans-serif;padding:20px;background:#0f1720;color:#fff}
+    label{display:block;margin-top:12px}
+    .row{display:flex;gap:8px;align-items:center}
+    button{padding:8px 12px;margin-top:12px;cursor:pointer;border:0;border-radius:6px}
+    .btn-primary{background:#ff4da6;color:#111}
+    .btn-ghost{background:transparent;border:1px solid #444}
+  </style>
+</head>
+<body>
+  <h2>Multech Lightshow — 控制台</h2>
+
+  <label>颜色
+    <input id="color" type="color" value="#ff77aa">
+  </label>
+
+  <label class="row">尺寸（px）
+    <input id="size" type="range" min="40" max="240" value="120">
+    <span id="sizeLabel">120</span>
+  </label>
+
+  <label class="row">持续时间（ms）
+    <input id="duration" type="range" min="400" max="4000" value="1500">
+    <span id="durLabel">1500</span>
+  </label>
+
+  <label class="row">放大倍数（scale）
+    <input id="scale" type="range" min="0.4" max="3.0" step="0.1" value="1.6">
+    <span id="scaleLabel">1.6</span>
+  </label>
+
+  <div style="margin-top:14px">
+    <button id="play" class="btn-primary">Play Heart</button>
+    <button id="burst" class="btn-primary">Burst 5 Hearts</button>
+    <button id="colorBtn" class="btn-ghost">Broadcast Background Color</button>
+    <button id="clear" class="btn-ghost">Clear Action</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+    // ---------- 把以下 firebaseConfig 替换为你的项目信息 ----------
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_DATABASE_URL",
+      projectId: "YOUR_PROJECT_ID",
+    };
+    // ----------------------------------------------------------------
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const colorEl = document.getElementById('color');
+    const sizeEl = document.getElementById('size');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const durEl = document.getElementById('duration');
+    const durLabel = document.getElementById('durLabel');
+    const scaleEl = document.getElementById('scale');
+    const scaleLabel = document.getElementById('scaleLabel');
+
+    sizeEl.oninput = () => sizeLabel.textContent = sizeEl.value;
+    durEl.oninput = () => durLabel.textContent = durEl.value;
+    scaleEl.oninput = () => scaleLabel.textContent = scaleEl.value;
+
+    function sendAction(obj) {
+      const payload = { ...obj, ts: Date.now() };
+      set(ref(db, 'light/action'), payload);
+    }
+
+    document.getElementById('play').onclick = () => {
+      sendAction({
+        type:'heart',
+        color: colorEl.value,
+        duration: parseInt(durEl.value),
+        scaleFrom: 0.2,
+        scaleTo: parseFloat(scaleEl.value),
+        size: parseInt(sizeEl.value)
+      });
+    };
+
+    document.getElementById('burst').onclick = async () => {
+      for (let i=0;i<5;i++) {
+        sendAction({
+          type:'heart',
+          color: colorEl.value,
+          duration: parseInt(durEl.value),
+          scaleFrom: 0.2,
+          scaleTo: parseFloat(scaleEl.value),
+          size: parseInt(sizeEl.value),
+          x: Math.random(),
+          y: Math.random() * 0.7 + 0.15
+        });
+        await new Promise(r => setTimeout(r, 120));
+      }
+    };
+
+    document.getElementById('colorBtn').onclick = () => {
+      set(ref(db, 'light/action'), { type:'color', color: colorEl.value, ts: Date.now() });
+    };
+
+    document.getElementById('clear').onclick = () => {
+      set(ref(db, 'light/action'), null);
+    };
+  </script>
+</body>
+</html>
