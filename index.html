@@ -2,32 +2,30 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightstick — Audience (Pro)</title>
+  <title>Multech Lightstick — Audience (Final)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root { --bg:#000; }
-    html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font-family:Inter, system-ui, Arial;}
+    :root{--bg:#000}
+    html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font-family:Inter,system-ui,Arial}
     #stage{position:relative;width:100%;height:100%;touch-action:none}
     #bg{position:absolute;inset:0;z-index:0;background:#000;transition:background 300ms linear}
-    /* overlay for fade */
-    .fade-overlay{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0}
-    /* generic element */
     .effect-el{position:absolute;pointer-events:none;will-change:transform,opacity;mix-blend-mode:screen}
     /* heart */
-    .heart{width:120px;height:120px;z-index:12;transform-origin:center center;filter:drop-shadow(0 0 18px rgba(255,100,160,0.45))}
+    .heart{z-index:20;transform-origin:center center;filter:drop-shadow(0 0 18px rgba(255,100,160,0.45))}
     /* star */
-    .star{width:120px;height:120px;z-index:12;transform-origin:center center;filter:drop-shadow(0 0 14px rgba(255,220,120,0.45))}
+    .star{z-index:20;transform-origin:center center;filter:drop-shadow(0 0 12px rgba(255,220,120,0.35))}
     /* bubble */
-    .bubble{border-radius:50%;z-index:9;opacity:0.85;mix-blend-mode:screen}
-    /* floating text up */
-    .floating-text{position:absolute;left:50%;transform:translateX(-50%);font-weight:700;white-space:nowrap;z-index:11}
-    /* marquee: full-width container at bottom or side */
-    .marquee-wrap{position:absolute;left:0;right:0;height:56px;bottom:10%;z-index:13;pointer-events:none;overflow:hidden;display:flex;align-items:center}
-    .marquee{white-space:nowrap;font-weight:700;display:inline-block}
-    @media (max-width:520px){
-      .marquee-wrap{bottom:6%;height:44px}
-      .heart,.star{width:92px;height:92px}
+    .bubble{border-radius:50%;z-index:12;mix-blend-mode:screen}
+    .bubble::after{
+      content:"";
+      position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.0) 50%);
+      pointer-events:none;opacity:0.55;
+      mix-blend-mode:overlay;
     }
+    /* marquee */
+    .marquee-wrap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:auto;z-index:30;pointer-events:none;display:flex;justify-content:center;align-items:center;overflow:hidden}
+    .marquee{white-space:nowrap;font-weight:800;display:inline-block}
   </style>
 </head>
 <body>
@@ -39,7 +37,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-    // ---------- Firebase config ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDkvbK-ubU4NKdUXGcj1vKgMNTsb7X2BTg",
       authDomain: "multech-lightshow.firebaseapp.com",
@@ -52,148 +49,118 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    console.log("Audience DB:", firebaseConfig.databaseURL);
-    // -------------------------------------
+    console.log("Audience connected to DB:", firebaseConfig.databaseURL);
 
     const stage = document.getElementById('stage');
     const bg = document.getElementById('bg');
 
-    // state holders for ongoing loops
+    // timers/state for persistent effects
     let blinkTimer = null;
     let blink2Timer = null;
-    let fadeElem = null;
-    let marqueeTimers = [];
+    let marqueeTimer = null;
 
-    // Listen DB
     const actionRef = ref(db, 'light/action');
     onValue(actionRef, snap => {
       const action = snap.val();
       if (!action) return;
-      // always log
       console.log('ACTION recv:', action);
-      applyAction(action);
+      handleAction(action);
     });
 
-    // Apply action (non-destructive: effects can stack)
-    function applyAction(action){
-      const t = action.type;
+    function handleAction(a){
+      const t = a.type;
       switch(t){
-        case 'steady': applySteady(action); break;
-        case 'blink': applyBlink(action); break;
-        case 'blink2': applyBlink2(action); break;
-        case 'fade': applyFade(action); break;
-        case 'bubble': applyBubble(action); break;
-        case 'heart': applyHeart(action); break;
-        case 'star': applyStar(action); break;
-        case 'marquee': applyMarquee(action); break;
+        case 'steady': bg.style.background = a.color || '#ff77aa'; break;
+        case 'blink': startBlink(a.color || '#ff77aa', Math.max(60, a.speed||400)); break;
+        case 'blink2': startBlink2(a.colorA||'#ff77aa', a.colorB||'#0077ff', Math.max(60, a.speed||400)); break;
+        case 'bubble': spawnManyBubbles(Math.max(1,a.count||12), a.color||'#9ae0ff', a.spread||0); break;
+        case 'heart': spawnHeartOnce(a); break;
+        case 'heart_blast': spawnHeartBlast(Math.max(5, a.count||24), a.color||'#ff77aa'); break;
+        case 'star': spawnStarOnce(a); break;
+        case 'star_blast': spawnStarBlast(Math.max(4, a.count||18), a.color||'#fff1a8'); break;
+        case 'marquee': spawnMarquee(a.text||'', a.color||'#fff', Math.max(1000,a.speed||12000), Math.max(12,a.fontSize||28)); break;
+        case 'clear_effect':
+          clearEffect(a.effect); break;
         case 'clear': clearAll(); break;
         default: console.warn('unknown action', t);
       }
     }
 
-    /* ---------- Core effect handlers ---------- */
-
-    // STEADY: set bg color but do NOT clear other elements
-    function applySteady(a){
-      const color = a.color || '#ff77aa';
-      bg.style.background = color;
+    /* ---------- Clear helpers ---------- */
+    function clearEffect(effect){
+      console.log('clear effect', effect);
+      if (effect === 'blink') { if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; } }
+      if (effect === 'blink2') { if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; } }
+      if (effect === 'bubble') { document.querySelectorAll('.bubble').forEach(e=>e.remove()); }
+      if (effect === 'heart') { document.querySelectorAll('.heart').forEach(e=>e.remove()); }
+      if (effect === 'star') { document.querySelectorAll('.star').forEach(e=>e.remove()); }
+      if (effect === 'marquee') { document.querySelectorAll('.marquee-wrap').forEach(e=>e.remove()); if (marqueeTimer){ clearTimeout(marqueeTimer); marqueeTimer=null; } }
     }
 
-    // BLINK (single color <-> black)
-    function applyBlink(a){
-      clearBlink2(); // but do not clear hearts/bubbles
-      const color = a.color || '#ff77aa';
-      const speed = Math.max(60, (a.speed|0) || 400);
+    function clearAll(){
+      if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; }
+      if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; }
+      document.querySelectorAll('.effect-el, .marquee-wrap').forEach(e=>e.remove());
+      bg.style.background = '#000';
+    }
+
+    /* ---------- Blink ---------- */
+    function startBlink(color, speed){
       if (blinkTimer) clearInterval(blinkTimer);
-      let on = false;
-      blinkTimer = setInterval(()=> {
-        bg.style.background = on ? color : '#000';
-        on = !on;
-      }, speed);
+      if (blink2Timer) { clearInterval(blink2Timer); blink2Timer=null; }
+      let on=false;
+      blinkTimer = setInterval(()=> { bg.style.background = on ? color : '#000'; on = !on; }, speed);
     }
-
-    // BLINK2: alternate two colors continuously (no black gap)
-    function applyBlink2(a){
-      if (blinkTimer){ clearInterval(blinkTimer); blinkTimer = null; }
-      const A = a.colorA || '#ff77aa';
-      const B = a.colorB || '#0077ff';
-      const speed = Math.max(60, (a.speed|0) || 400);
-      let state = 0;
+    function startBlink2(A,B,speed){
+      if (blinkTimer) { clearInterval(blinkTimer); blinkTimer=null; }
       if (blink2Timer) clearInterval(blink2Timer);
-      // cycle A -> B -> A -> B ...
-      blink2Timer = setInterval(()=> {
-        bg.style.background = (state % 2 === 0) ? A : B;
-        state++;
-      }, speed);
-    }
-    function clearBlink2(){
-      if (blink2Timer){ clearInterval(blink2Timer); blink2Timer = null; }
+      let state=0;
+      blink2Timer = setInterval(()=> { bg.style.background = (state%2===0)?A:B; state++; }, speed);
     }
 
-    // FADE: overlay div fades in/out opacity loop once; by default one cycle fade in then out
-    function applyFade(a){
-      // don't clear other effects
-      const color = a.color || '#ff77aa';
-      const dur = Math.max(200, (a.duration|0) || 2000);
-      // create overlay that animates opacity
-      const overlay = document.createElement('div');
-      overlay.className = 'fade-overlay';
-      overlay.style.background = color;
-      overlay.style.zIndex = 4;
-      overlay.style.opacity = '0';
-      stage.appendChild(overlay);
-      // fade in
-      requestAnimationFrame(()=> overlay.style.transition = `opacity ${dur/1000}s ease-in-out`);
-      requestAnimationFrame(()=> overlay.style.opacity = '0.9');
-      // fade out after duration
-      setTimeout(()=> {
-        overlay.style.opacity = '0';
-        setTimeout(()=> { if (overlay.parentNode) overlay.remove(); }, dur + 120);
-      }, dur);
-      // store last created fadeElem for potential clearing
-      fadeElem = overlay;
-    }
-
-    // BUBBLE(s): spawn n bubbles with long lifetime
-    function applyBubble(a){
-      const color = a.color || '#9ae0ff';
-      const count = Math.max(1, (a.count|0) || 12);
-      const spread = Math.max(0, (a.spread|0) || 0);
-      for (let i=0;i<count;i++){
-        setTimeout(()=> createBubble({color, spread}), i*120);
+    /* ---------- Bubbles (full-screen) ---------- */
+    function spawnManyBubbles(n, color, spread){
+      for (let i=0;i<n;i++){
+        setTimeout(()=> spawnBubble({color, spread}), i*60);
       }
     }
-    function createBubble({color='#9ae0ff', spread=0}){
-      const vw = window.innerWidth, vh = window.innerHeight;
+    function spawnBubble({ color='#9ae0ff', spread=0 }){
+      const vw = innerWidth, vh = innerHeight;
       const el = document.createElement('div');
       el.className = 'bubble effect-el';
-      const size = 28 + Math.random()*60; // bigger bubbles
+      const size = 30 + Math.random()*80; // larger
       el.style.width = el.style.height = size + 'px';
-      el.style.background = color;
+      // full screen start y: can start below bottom or anywhere; we let some start below, some inside, some above
+      const startY = (Math.random()*1.6 - 0.3) * vh; // -0.3*vh .. 1.3*vh
       el.style.left = (Math.random()*vw - size/2) + 'px';
-      el.style.top = (vh + Math.random()*40) + 'px';
-      el.style.opacity = (0.35 + Math.random()*0.6).toString();
+      el.style.top = startY + 'px';
+      // translucent look
+      el.style.background = color;
+      el.style.opacity = (0.25 + Math.random()*0.6).toString();
       stage.appendChild(el);
-      const targetY = - (50 + Math.random()*200);
+      // target move: upward large distance
+      const endY = - (50 + Math.random()*300);
       const tx = (spread>0) ? (Math.random()*spread - spread/2) : (Math.random()*240 - 120);
-      const duration = 8000 + Math.random()*10000; // long life
-      el.style.transition = `transform ${duration/1000}s linear, opacity ${duration/1000}s linear`;
+      const dur = 9000 + Math.random()*14000; // long life
+      el.style.transition = `transform ${dur/1000}s linear, opacity ${dur/1000}s linear`;
       requestAnimationFrame(()=> {
-        el.style.transform = `translate(${tx}px, ${targetY}px) scale(${0.6 + Math.random()*0.8})`;
+        el.style.transform = `translate(${tx}px, ${endY - startY}px) scale(${0.6 + Math.random()*0.9})`;
         el.style.opacity = '0.05';
       });
-      // remove at end
-      setTimeout(()=> { if (el.parentNode) el.remove(); }, duration + 200);
+      setTimeout(()=> { if (el.parentNode) el.remove(); }, dur + 200);
     }
 
-    // HEART (pop + fade) — same as original
-    function applyHeart(a){
-      spawnHeart({ color: a.color || '#ff77aa', duration: Math.max(200, (a.duration|0)||1500), size: Math.max(40,(a.size|0)||120) });
+    /* ---------- Heart ---------- */
+    function spawnHeartOnce(a){
+      const color = a.color || '#ff77aa';
+      const size = Math.max(40, a.size||120);
+      const dur = Math.max(200, a.duration||1500);
+      spawnHeart({color, size, dur});
     }
-    function spawnHeart({ color='#ff77aa', duration=1500, size=120 }){
+    function spawnHeart({ color='#ff77aa', size=120, dur=1500 }){
       const vw = innerWidth, vh = innerHeight;
-      const x = (Math.random()*0.7 + 0.15) * vw;
-      const y = (Math.random()*0.6 + 0.15) * vh;
+      const x = (Math.random()*0.8 + 0.1)*vw;
+      const y = (Math.random()*0.7 + 0.15)*vh;
       const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
       svg.setAttribute('viewBox','0 0 32 29');
       svg.className = 'heart effect-el';
@@ -209,24 +176,29 @@
       svg.style.opacity = '0';
       stage.appendChild(svg);
       requestAnimationFrame(()=> {
-        svg.style.transition = `transform ${duration/1000}s cubic-bezier(.2,.9,.3,1), opacity ${duration/1000}s linear`;
+        svg.style.transition = `transform ${dur/1000}s cubic-bezier(.2,.9,.3,1), opacity ${dur/1000}s linear`;
         svg.style.transform = 'scale(1.6)';
         svg.style.opacity = '0.95';
       });
-      setTimeout(()=> {
-        svg.style.opacity = '0';
-        setTimeout(()=> svg.remove(), 420);
-      }, duration);
+      setTimeout(()=> { svg.style.opacity='0'; setTimeout(()=> svg.remove(), 420); }, dur);
+    }
+    function spawnHeartBlast(count, color){
+      for (let i=0;i<count;i++){
+        setTimeout(()=> spawnHeart({ color, size: 60 + Math.random()*160, dur: 900 + Math.random()*1600 }), i*80);
+      }
     }
 
-    // STAR (like heart)
-    function applyStar(a){
-      spawnStar({ color: a.color || '#fff1a8', duration: Math.max(200,(a.duration|0)||1500), size: Math.max(40,(a.size|0)||100) });
+    /* ---------- Star ---------- */
+    function spawnStarOnce(a){
+      const color = a.color || '#fff1a8';
+      const size = Math.max(40, a.size||100);
+      const dur = Math.max(200, a.duration||1500);
+      spawnStar({color,size,dur});
     }
-    function spawnStar({ color='#fff1a8', duration=1500, size=100 }){
+    function spawnStar({ color='#fff1a8', size=100, dur=1500 }){
       const vw = innerWidth, vh = innerHeight;
-      const x = (Math.random()*0.7 + 0.15) * vw;
-      const y = (Math.random()*0.6 + 0.15) * vh;
+      const x = (Math.random()*0.8 + 0.1)*vw;
+      const y = (Math.random()*0.7 + 0.15)*vh;
       const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
       svg.setAttribute('viewBox','0 0 64 64');
       svg.className = 'star effect-el';
@@ -235,7 +207,6 @@
       svg.style.width = size + 'px';
       svg.style.height = size + 'px';
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      // simple star path
       path.setAttribute('d','M32 4 L39 24 L60 24 L42 36 L49 56 L32 44 L15 56 L22 36 L4 24 L25 24 Z');
       path.setAttribute('fill', color);
       svg.appendChild(path);
@@ -243,67 +214,50 @@
       svg.style.opacity = '0';
       stage.appendChild(svg);
       requestAnimationFrame(()=> {
-        svg.style.transition = `transform ${duration/1000}s cubic-bezier(.2,.9,.3,1), opacity ${duration/1000}s linear`;
-        svg.style.transform = 'scale(1.3) rotate(20deg)';
+        svg.style.transition = `transform ${dur/1000}s cubic-bezier(.2,.9,.3,1), opacity ${dur/1000}s linear`;
+        svg.style.transform = `scale(1.2) rotate(${10 - Math.random()*20}deg)`;
         svg.style.opacity = '0.95';
       });
-      setTimeout(()=> { svg.style.opacity = '0'; setTimeout(()=> svg.remove(), 420); }, duration);
+      setTimeout(()=> { svg.style.opacity='0'; setTimeout(()=> svg.remove(), 420); }, dur);
+    }
+    function spawnStarBlast(count, color){
+      for (let i=0;i<count;i++){
+        setTimeout(()=> spawnStar({ color, size: 50 + Math.random()*120, dur: 900 + Math.random()*1600 }), i*90);
+      }
     }
 
-    // MARQUEE: scroll across from one edge to the opposite edge
-    function applyMarquee(a){
-      const txt = a.text || '';
-      if (!txt) return;
-      const color = a.color || '#fff';
-      const speed = Math.max(1000, (a.speed|0) || 12000);
-      const fontSize = Math.max(12, (a.fontSize|0) || 28);
-      createMarquee(txt, color, speed, fontSize);
-    }
-    function createMarquee(text, color, speed, fontSize){
-      // orientation: if width>height -> horizontal left->right or right->left; in portrait we treat as vertical marquee? user wants horizontal when rotated, so implement horizontal always
+    /* ---------- Marquee (right -> left, exact text, centered vertically) ---------- */
+    function spawnMarquee(text, color, speed, fontSize){
+      if (!text) return;
+      // remove previous marquee if exists (we keep multiple allowed? user wanted single behavior)
+      document.querySelectorAll('.marquee-wrap').forEach(e=>e.remove());
+      if (marqueeTimer){ clearTimeout(marqueeTimer); marqueeTimer=null; }
+
       const wrap = document.createElement('div');
       wrap.className = 'marquee-wrap';
-      wrap.style.bottom = (window.innerHeight*0.08) + 'px';
       const span = document.createElement('div');
       span.className = 'marquee';
-      span.style.fontSize = fontSize + 'px';
       span.style.color = color;
-      span.textContent = '   ' + text + '   ';
-      // repeat to ensure continuous feel
-      const repeat = 6;
-      let longText = '';
-      for (let i=0;i<repeat;i++) longText += '    ' + text + '    ';
-      span.textContent = longText;
+      span.style.fontSize = fontSize + 'px';
+      span.textContent = text; // exact text only
       wrap.appendChild(span);
       stage.appendChild(wrap);
-      // measure and animate from right edge to left edge (enter from right)
+
       requestAnimationFrame(()=> {
-        const totalDistance = span.offsetWidth + window.innerWidth;
-        span.style.transform = `translateX(${window.innerWidth}px)`;
+        const startX = window.innerWidth;
+        const endX = -span.offsetWidth;
+        span.style.transform = `translateX(${startX}px)`;
         span.style.transition = `transform ${speed/1000}s linear`;
-        requestAnimationFrame(()=> {
-          span.style.transform = `translateX(-${span.offsetWidth}px)`;
-        });
+        requestAnimationFrame(()=> { span.style.transform = `translateX(${endX}px)`; });
       });
-      // cleanup
-      const t = setTimeout(()=> { wrap.remove(); }, speed + 200);
-      marqueeTimers.push(t);
+
+      marqueeTimer = setTimeout(()=> { wrap.remove(); marqueeTimer=null; }, speed + 200);
     }
 
-    // CLEAR all
-    function clearAll(){
-      // clear timers
-      if (blinkTimer){ clearInterval(blinkTimer); blinkTimer = null; }
-      if (blink2Timer){ clearInterval(blink2Timer); blink2Timer = null; }
-      marqueeTimers.forEach(t=>clearTimeout(t)); marqueeTimers = [];
-      // remove elms
-      document.querySelectorAll('.effect-el, .fade-overlay, .marquee-wrap').forEach(e=>e.remove());
-      // reset bg
-      bg.style.background = '#000';
-    }
-
-    // expose debug
-    window._multech = { applyAction, clearAll, createBubble, spawnHeart, spawnStar, createMarquee };
+    // expose debug helpers for quick manual testing
+    window._multech = {
+      spawnBubble, spawnManyBubbles, spawnHeart, spawnHeartBlast, spawnStar, spawnStarBlast, spawnMarquee, clearAll, clearEffect
+    };
   </script>
 </body>
 </html>

@@ -2,133 +2,113 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Multech Lightshow — Controller (Pro)</title>
+  <title>Multech Lightshow — Controller (Final)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{--bg:#071024;--panel:#0b2230;--accent:#ff5fa8;--muted:#8fb0bb}
-    body{margin:0;padding:18px;font-family:Inter, system-ui, Arial;background:var(--bg);color:#fff}
+    body{margin:0;padding:18px;font-family:Inter,system-ui,Arial;background:var(--bg);color:#fff}
     h2{margin:0 0 12px 0}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
     .panel{background:var(--panel);padding:12px;border-radius:10px}
     label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
     .row{display:flex;gap:8px;align-items:center;margin-top:8px}
     input[type="color"]{width:48px;height:36px;border:0;background:transparent}
-    input[type="number"], input[type="text"]{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#031018;color:#fff}
+    input[type="number"],input[type="text"]{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#031018;color:#fff}
     input[type="range"]{flex:1}
     button{padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
     .btn-primary{background:var(--accent);color:#081018}
     .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe}
     .note{font-size:12px;color:#7fb0bf;margin-left:6px}
-    .control-block{display:flex;flex-direction:column;gap:6px}
-    .inline{display:flex;gap:8px;align-items:center}
   </style>
 </head>
 <body>
-  <h2>Multech Lightshow — Controller (Pro)</h2>
+  <h2>Multech Lightshow — Controller (Final)</h2>
 
   <div class="grid">
     <div class="panel">
-      <label>主颜色（hex）</label>
+      <label>主颜色</label>
       <div class="row">
         <input id="color" type="color" value="#ff77aa">
         <input id="colorHex" type="text" value="#ff77aa" style="flex:1">
       </div>
-
-      <div style="margin-top:10px" class="control-block">
-        <div><label>常亮（Steady）</label>
-          <div class="row">
-            <button id="steadyBtn" class="btn-primary">Set Steady</button>
-            <button id="clearBtn" class="btn-ghost">Clear All</button>
-            <span class="note">Steady 不会停止其它效果</span>
-          </div>
-        </div>
+      <div class="row" style="margin-top:10px">
+        <button id="steadyBtn" class="btn-primary">Set Steady</button>
+        <button id="clearAllBtn" class="btn-ghost">Clear All</button>
       </div>
     </div>
 
     <div class="panel">
-      <label>闪烁（单色） — speed (ms)</label>
-      <div class="row inline">
+      <label>闪烁（单色） speed (ms)</label>
+      <div class="row">
         <input id="blinkColor" type="color" value="#ff77aa">
-        <input id="blinkSpeedSlider" type="range" min="60" max="2000" value="400">
-        <input id="blinkSpeedNum" type="number" min="60" max="2000" value="400" style="width:90px">
+        <input id="blinkSpeed" type="number" min="60" max="2000" value="400" style="width:90px">
         <button id="blinkBtn" class="btn-primary">Start Blink</button>
+        <button id="clearBlinkBtn" class="btn-ghost">Clear Blink</button>
       </div>
 
-      <label style="margin-top:8px">闪烁（两色交替） — A / B / speed (ms)</label>
-      <div class="row inline">
+      <label style="margin-top:8px">闪烁（两色） A / B / speed(ms)</label>
+      <div class="row">
         <input id="blinkA" type="color" value="#ff77aa">
         <input id="blinkB" type="color" value="#0077ff">
-        <input id="blink2SpeedSlider" type="range" min="60" max="2000" value="400">
-        <input id="blink2SpeedNum" type="number" min="60" max="2000" value="400" style="width:90px">
+        <input id="blink2Speed" type="number" min="60" max="2000" value="400" style="width:90px">
         <button id="blink2Btn" class="btn-primary">Start 2-color Blink</button>
-      </div>
-
-      <label style="margin-top:8px">渐隐渐现（Fade） — duration(ms)</label>
-      <div class="row inline">
-        <input id="fadeColor" type="color" value="#ff77aa">
-        <input id="fadeDurSlider" type="range" min="200" max="10000" value="2200">
-        <input id="fadeDurNum" type="number" min="200" max="10000" value="2200" style="width:110px">
-        <button id="fadeBtn" class="btn-primary">Play Fade</button>
+        <button id="clearBlink2Btn" class="btn-ghost">Clear Blink2</button>
       </div>
     </div>
 
     <div class="panel">
       <label>泡泡（Bubble） — color / count / spread</label>
-      <div class="row inline">
+      <div class="row">
         <input id="bubbleColor" type="color" value="#9ae0ff">
-        <input id="bubbleCountSlider" type="range" min="1" max="80" value="12">
-        <input id="bubbleCountNum" type="number" min="1" max="80" value="12" style="width:80px">
+        <input id="bubbleCount" type="number" min="1" max="200" value="40" style="width:90px">
       </div>
-      <div class="row inline">
-        <label style="width:70px">spread</label>
-        <input id="bubbleSpreadSlider" type="range" min="0" max="400" value="0">
-        <input id="bubbleSpreadNum" type="number" min="0" max="400" value="0" style="width:80px">
-        <button id="bubbleBtn" class="btn-primary">Spawn Bubbles</button>
+      <div class="row">
+        <label style="width:60px">spread</label>
+        <input id="bubbleSpread" type="number" min="0" max="800" value="200" style="width:90px">
+        <button id="bubbleBtn" class="btn-primary">Spawn Bubbles (Full Page)</button>
+        <button id="clearBubbleBtn" class="btn-ghost">Clear Bubbles</button>
       </div>
 
-      <label style="margin-top:10px">爱心（Heart） — color / size / duration</label>
-      <div class="row inline">
+      <label style="margin-top:10px">爱心（Heart） — single / blast</label>
+      <div class="row">
         <input id="heartColor" type="color" value="#ff77aa">
-        <input id="heartSizeSlider" type="range" min="40" max="300" value="120">
-        <input id="heartSizeNum" type="number" min="40" max="300" value="120" style="width:80px">
+        <input id="heartSize" type="number" min="40" max="300" value="120" style="width:90px">
       </div>
-      <div class="row inline">
-        <label style="width:70px">duration</label>
-        <input id="heartDurSlider" type="range" min="200" max="5000" value="1500">
-        <input id="heartDurNum" type="number" min="200" max="5000" value="1500" style="width:110px">
+      <div class="row">
+        <label style="width:60px">duration</label>
+        <input id="heartDur" type="number" min="200" max="5000" value="1500" style="width:90px">
         <button id="heartBtn" class="btn-primary">Send Heart</button>
+        <button id="heartBlastBtn" class="btn-primary">Heart Blast</button>
+        <button id="clearHeartBtn" class="btn-ghost">Clear Hearts</button>
       </div>
 
-      <label style="margin-top:10px">星星（Star） — color / size / duration</label>
-      <div class="row inline">
+      <label style="margin-top:10px">星星（Star） — single / blast</label>
+      <div class="row">
         <input id="starColor" type="color" value="#fff1a8">
-        <input id="starSizeSlider" type="range" min="40" max="300" value="100">
-        <input id="starSizeNum" type="number" min="40" max="300" value="100" style="width:80px">
+        <input id="starSize" type="number" min="40" max="300" value="100" style="width:90px">
       </div>
-      <div class="row inline">
-        <label style="width:70px">duration</label>
-        <input id="starDurSlider" type="range" min="200" max="5000" value="1500">
-        <input id="starDurNum" type="number" min="200" max="5000" value="1500" style="width:110px">
+      <div class="row">
+        <label style="width:60px">duration</label>
+        <input id="starDur" type="number" min="200" max="5000" value="1500" style="width:90px">
         <button id="starBtn" class="btn-primary">Send Star</button>
+        <button id="starBlastBtn" class="btn-primary">Star Blast</button>
+        <button id="clearStarBtn" class="btn-ghost">Clear Stars</button>
       </div>
     </div>
 
     <div class="panel">
       <label>跑马灯（Marquee） — text / speed(ms) / fontsize</label>
-      <div class="row inline">
+      <div class="row">
         <input id="marqText" type="text" placeholder="输入跑马灯文字..." style="flex:1">
-        <input id="marqSizeNum" type="number" min="12" max="72" value="28" style="width:80px">
+        <input id="marqSize" type="number" min="12" max="72" value="28" style="width:90px">
       </div>
-      <div class="row inline">
-        <input id="marqSpeedSlider" type="range" min="2000" max="40000" value="12000">
-        <input id="marqSpeedNum" type="number" min="2000" max="40000" value="12000" style="width:110px">
-        <button id="marqBtn" class="btn btn-primary">Send Marquee</button>
+      <div class="row">
+        <input id="marqSpeed" type="number" min="1000" max="60000" value="12000" style="width:120px">
+        <button id="marqBtn" class="btn-primary">Send Marquee</button>
+        <button id="clearMarqBtn" class="btn-ghost">Clear Marquee</button>
       </div>
     </div>
   </div>
-
-  <div style="height:10px"></div>
-  <div style="font-size:12px;color:#8fb0bb">说明：每次发送会写入 Firebase `light/action` → 观众端会接收并播放；Steady 不会阻止其它 effect。</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
@@ -148,87 +128,77 @@
     const db = getDatabase(app);
     console.log('Controller DB ready:', firebaseConfig.databaseURL);
 
-    // shortcut
     const send = (o) => set(ref(db,'light/action'), {...o, ts:Date.now()}).then(()=>console.log('sent',o)).catch(e=>console.error(e));
 
-    // sync color textbox
+    // color sync
     const color = document.getElementById('color'), colorHex = document.getElementById('colorHex');
     color.addEventListener('input', ()=> colorHex.value = color.value);
-    colorHex.addEventListener('change', ()=> { color.value = colorHex.value });
+    colorHex.addEventListener('change', ()=> color.value = colorHex.value);
 
-    // STEADY & CLEAR
     document.getElementById('steadyBtn').onclick = ()=> send({ type:'steady', color: color.value });
-    document.getElementById('clearBtn').onclick = ()=> send({ type:'clear' });
+    document.getElementById('clearAllBtn').onclick = ()=> send({ type:'clear' });
 
-    // BLINK single (slider + number sync)
-    const blinkColor = document.getElementById('blinkColor');
-    const blinkSpeedSlider = document.getElementById('blinkSpeedSlider');
-    const blinkSpeedNum = document.getElementById('blinkSpeedNum');
-    blinkSpeedSlider.oninput = ()=> blinkSpeedNum.value = blinkSpeedSlider.value;
-    blinkSpeedNum.onchange = ()=> blinkSpeedSlider.value = blinkSpeedNum.value;
+    // blink
     document.getElementById('blinkBtn').onclick = ()=> {
-      send({ type:'blink', color: blinkColor.value, speed: parseInt(blinkSpeedNum.value||400) });
+      const c = document.getElementById('blinkColor').value;
+      const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blinkSpeed').value||400)));
+      send({ type:'blink', color: c, speed: s });
     };
+    document.getElementById('clearBlinkBtn').onclick = ()=> send({ type:'clear_effect', effect:'blink' });
 
-    // BLINK two-color
-    const blinkA = document.getElementById('blinkA'), blinkB = document.getElementById('blinkB');
-    const blink2SpeedSlider = document.getElementById('blink2SpeedSlider'), blink2SpeedNum = document.getElementById('blink2SpeedNum');
-    blink2SpeedSlider.oninput = ()=> blink2SpeedNum.value = blink2SpeedSlider.value;
-    blink2SpeedNum.onchange = ()=> blink2SpeedSlider.value = blink2SpeedNum.value;
+    // blink2
     document.getElementById('blink2Btn').onclick = ()=> {
-      send({ type:'blink2', colorA: blinkA.value, colorB: blinkB.value, speed: parseInt(blink2SpeedNum.value||400) });
+      const a = document.getElementById('blinkA').value, b = document.getElementById('blinkB').value;
+      const s = Math.max(60, Math.min(2000, parseInt(document.getElementById('blink2Speed').value||400)));
+      send({ type:'blink2', colorA: a, colorB: b, speed: s });
     };
+    document.getElementById('clearBlink2Btn').onclick = ()=> send({ type:'clear_effect', effect:'blink2' });
 
-    // FADE
-    const fadeColor = document.getElementById('fadeColor'), fadeDurSlider = document.getElementById('fadeDurSlider'), fadeDurNum = document.getElementById('fadeDurNum');
-    fadeDurSlider.oninput = ()=> fadeDurNum.value = fadeDurSlider.value;
-    fadeDurNum.onchange = ()=> fadeDurSlider.value = fadeDurNum.value;
-    document.getElementById('fadeBtn').onclick = ()=> { send({ type:'fade', color: fadeColor.value, duration: parseInt(fadeDurNum.value||2200) }); };
-
-    // BUBBLE
-    const bubbleColor = document.getElementById('bubbleColor'), bubbleCountSlider = document.getElementById('bubbleCountSlider'), bubbleCountNum = document.getElementById('bubbleCountNum');
-    const bubbleSpreadSlider = document.getElementById('bubbleSpreadSlider'), bubbleSpreadNum = document.getElementById('bubbleSpreadNum');
-    bubbleCountSlider.oninput = ()=> bubbleCountNum.value = bubbleCountSlider.value;
-    bubbleCountNum.onchange = ()=> bubbleCountSlider.value = bubbleCountNum.value;
-    bubbleSpreadSlider.oninput = ()=> bubbleSpreadNum.value = bubbleSpreadSlider.value;
-    bubbleSpreadNum.onchange = ()=> bubbleSpreadSlider.value = bubbleSpreadNum.value;
+    // bubbles
     document.getElementById('bubbleBtn').onclick = ()=> {
-      send({ type:'bubble', color: bubbleColor.value, count: parseInt(bubbleCountNum.value||12), spread: parseInt(bubbleSpreadNum.value||0) });
+      const c = document.getElementById('bubbleColor').value;
+      const count = Math.max(1, Math.min(200, parseInt(document.getElementById('bubbleCount').value||40)));
+      const spread = Math.max(0, Math.min(800, parseInt(document.getElementById('bubbleSpread').value||200)));
+      send({ type:'bubble', color: c, count: count, spread: spread });
     };
+    document.getElementById('clearBubbleBtn').onclick = ()=> send({ type:'clear_effect', effect:'bubble' });
 
-    // HEART
-    const heartColor = document.getElementById('heartColor'), heartSizeSlider = document.getElementById('heartSizeSlider'), heartSizeNum = document.getElementById('heartSizeNum');
-    const heartDurSlider = document.getElementById('heartDurSlider'), heartDurNum = document.getElementById('heartDurNum');
-    heartSizeSlider.oninput = ()=> heartSizeNum.value = heartSizeSlider.value;
-    heartSizeNum.onchange = ()=> heartSizeSlider.value = heartSizeNum.value;
-    heartDurSlider.oninput = ()=> heartDurNum.value = heartDurSlider.value;
-    heartDurNum.onchange = ()=> heartDurSlider.value = heartDurNum.value;
+    // heart single / blast
     document.getElementById('heartBtn').onclick = ()=> {
-      send({ type:'heart', color: heartColor.value, size: parseInt(heartSizeNum.value||120), duration: parseInt(heartDurNum.value||1500) });
+      const c = document.getElementById('heartColor').value;
+      const size = Math.max(40, Math.min(300, parseInt(document.getElementById('heartSize').value||120)));
+      const dur = Math.max(200, Math.min(5000, parseInt(document.getElementById('heartDur').value||1500)));
+      send({ type:'heart', color: c, size: size, duration: dur });
     };
+    document.getElementById('heartBlastBtn').onclick = ()=> {
+      const c = document.getElementById('heartColor').value;
+      send({ type:'heart_blast', color: c, count: 30 });
+    };
+    document.getElementById('clearHeartBtn').onclick = ()=> send({ type:'clear_effect', effect:'heart' });
 
-    // STAR
-    const starColor = document.getElementById('starColor'), starSizeSlider = document.getElementById('starSizeSlider'), starSizeNum = document.getElementById('starSizeNum');
-    const starDurSlider = document.getElementById('starDurSlider'), starDurNum = document.getElementById('starDurNum');
-    starSizeSlider.oninput = ()=> starSizeNum.value = starSizeSlider.value;
-    starSizeNum.onchange = ()=> starSizeSlider.value = starSizeNum.value;
-    starDurSlider.oninput = ()=> starDurNum.value = starDurSlider.value;
-    starDurNum.onchange = ()=> starDurSlider.value = starDurNum.value;
+    // star single / blast
     document.getElementById('starBtn').onclick = ()=> {
-      send({ type:'star', color: starColor.value, size: parseInt(starSizeNum.value||100), duration: parseInt(starDurNum.value||1500) });
+      const c = document.getElementById('starColor').value;
+      const size = Math.max(40, Math.min(300, parseInt(document.getElementById('starSize').value||100)));
+      const dur = Math.max(200, Math.min(5000, parseInt(document.getElementById('starDur').value||1500)));
+      send({ type:'star', color: c, size: size, duration: dur });
     };
+    document.getElementById('starBlastBtn').onclick = ()=> {
+      const c = document.getElementById('starColor').value;
+      send({ type:'star_blast', color: c, count: 18 });
+    };
+    document.getElementById('clearStarBtn').onclick = ()=> send({ type:'clear_effect', effect:'star' });
 
-    // MARQUEE
-    const marqText = document.getElementById('marqText'), marqSizeNum = document.getElementById('marqSizeNum');
-    const marqSpeedSlider = document.getElementById('marqSpeedSlider'), marqSpeedNum = document.getElementById('marqSpeedNum');
-    marqSpeedSlider.oninput = ()=> marqSpeedNum.value = marqSpeedSlider.value;
-    marqSpeedNum.onchange = ()=> marqSpeedSlider.value = marqSpeedNum.value;
+    // marquee
     document.getElementById('marqBtn').onclick = ()=> {
-      const t = (marqText.value||'').trim();
-      if (!t) return alert('请输入跑马灯文字');
-      send({ type:'marquee', text: t, speed: parseInt(marqSpeedNum.value||12000), fontSize: parseInt(marqSizeNum.value||28), color: color.value });
-      marqText.value = '';
+      const txt = (document.getElementById('marqText').value||'').trim();
+      if (!txt) return alert('请输入跑马灯文字');
+      const speed = Math.max(1000, Math.min(60000, parseInt(document.getElementById('marqSpeed').value||12000)));
+      const fs = Math.max(12, Math.min(72, parseInt(document.getElementById('marqSize').value||28)));
+      send({ type:'marquee', text: txt, speed: speed, fontSize: fs, color: color.value });
+      document.getElementById('marqText').value = '';
     };
+    document.getElementById('clearMarqBtn').onclick = ()=> send({ type:'clear_effect', effect:'marquee' });
 
   </script>
 </body>
